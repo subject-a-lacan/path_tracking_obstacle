@@ -33,3 +33,5 @@ study_mpu6050_1\main.o: ../Core/Inc/usart.h
 study_mpu6050_1\main.o: ../Core/Inc/gpio.h
 study_mpu6050_1\main.o: ../Core/Inc/mpu6050.h
 study_mpu6050_1\main.o: ../Core/Inc/mpu6050_test.h
+study_mpu6050_1\main.o: ../Core/Inc/lora.h
+study_mpu6050_1\main.o: ../Core/Inc/buzzler.h

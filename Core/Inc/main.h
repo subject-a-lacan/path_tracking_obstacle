@@ -57,6 +57,30 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Trigger_Pin GPIO_PIN_0
+#define Trigger_GPIO_Port GPIOA
+#define Echo_Pin GPIO_PIN_1
+#define Echo_GPIO_Port GPIOA
+#define LORA_TX_Pin GPIO_PIN_2
+#define LORA_TX_GPIO_Port GPIOA
+#define LORA_RX_Pin GPIO_PIN_3
+#define LORA_RX_GPIO_Port GPIOA
+#define BUZZLER_Pin GPIO_PIN_4
+#define BUZZLER_GPIO_Port GPIOA
+#define KEY_1_Pin GPIO_PIN_12
+#define KEY_1_GPIO_Port GPIOB
+#define Lora_AUX_Pin GPIO_PIN_15
+#define Lora_AUX_GPIO_Port GPIOB
+#define KEY_2_Pin GPIO_PIN_12
+#define KEY_2_GPIO_Port GPIOA
+#define steer_21_Pin GPIO_PIN_15
+#define steer_21_GPIO_Port GPIOA
+#define steer_22_Pin GPIO_PIN_3
+#define steer_22_GPIO_Port GPIOB
+#define MPU_SCL_Pin GPIO_PIN_8
+#define MPU_SCL_GPIO_Port GPIOB
+#define MPU_SDA_Pin GPIO_PIN_9
+#define MPU_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
