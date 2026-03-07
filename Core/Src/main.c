@@ -27,7 +27,7 @@
 #include "mpu6050.h"
 #include "mpu6050_test.h"
 #include "stdio.h"
-
+#include "lora.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
