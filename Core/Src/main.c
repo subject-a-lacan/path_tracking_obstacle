@@ -28,6 +28,7 @@
 #include "mpu6050_test.h"
 #include "stdio.h"
 #include "lora.h"
+#include "buzzler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,17 +100,20 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   //  MPU6050_Test();
-  MPU6050_EularAngleTest();
+  //MPU6050_EularAngleTest();
+  // Lora_Test();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      Buzzler_beep(100);
+      HAL_Delay(1000);
     //   printf("Hello World!\r\n");
     // HAL_Delay(1000);
     /* USER CODE END WHILE */
-
+    
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
