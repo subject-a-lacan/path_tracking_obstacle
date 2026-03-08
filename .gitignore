@@ -1,0 +1,20 @@
+# Keil 工程中间文件 & 编译产物
+*.uvguix
+*.crf
+*.d
+*.o
+*.axf
+*.hex
+*.lst
+*.map
+*.htm
+*.dep
+*.build_log.txt
+MDK-ARM/
+Objects/
+Listings/
+
+# 临时文件
+*.bak
+*.tmp
+*.swp
