@@ -50,10 +50,13 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Trigger_Pin|BUZZLER_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Trigger_Pin|BUZZLER_Pin|AD2_Pin|AD1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Trigger_Pin BUZZLER_Pin */
-  GPIO_InitStruct.Pin = Trigger_Pin|BUZZLER_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, AD0_Pin|ganwei_enable_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : Trigger_Pin BUZZLER_Pin AD2_Pin AD1_Pin */
+  GPIO_InitStruct.Pin = Trigger_Pin|BUZZLER_Pin|AD2_Pin|AD1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -64,6 +67,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(Echo_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : AD0_Pin ganwei_enable_Pin */
+  GPIO_InitStruct.Pin = AD0_Pin|ganwei_enable_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : KEY_1_Pin Lora_AUX_Pin */
   GPIO_InitStruct.Pin = KEY_1_Pin|Lora_AUX_Pin;
