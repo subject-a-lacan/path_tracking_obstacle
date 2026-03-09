@@ -57,12 +57,12 @@ uint16_t SR04_GetDistance(void) {
 
     // 4. 等待 Echo 变低
     while(HAL_GPIO_ReadPin(SR04_ECHO_PORT, SR04_ECHO_PIN) == GPIO_PIN_SET) {
-        // 只要避障，所以只关心近处！
-        // 假设避障安全距离是 20cm，这里设定最多只等 3 毫秒 (对应距离约 50cm)
-        // 超过 3 毫秒说明前方 50cm 内无障碍，直接强行退出，保护20ms PID 周期
-        if ((HAL_GetTick() - start_time) > 3) {
-            return 999; 
-        }
+        // // 只要避障，所以只关心近处！
+        // // 假设避障安全距离是 20cm，这里设定最多只等 3 毫秒 (对应距离约 50cm)
+        // // 超过 3 毫秒说明前方 50cm 内无障碍，直接强行退出，保护20ms PID 周期
+        // if ((HAL_GetTick() - start_time) > 3) {
+        //     return 999; 
+        // }
     }
 
     // 5. 计算经过的时间并转化为距离
@@ -79,7 +79,7 @@ uint16_t SR04_GetDistance(void) {
     echo_time_us += (HAL_GetTick() - start_time) * 1000;
 
     // 距离(cm) = 时间(us) * 340m/s / 2 / 10000 -> 约等于 时间 / 58
-    return (uint16_t)(echo_time_us / 58);
+    return (uint16_t)(echo_time_us *(331.4 + 0.607*20)/20000);
 }
 
 
@@ -96,11 +96,11 @@ void SR04_Test(void) {
     uint16_t distance = SR04_GetDistance();
 
     if (distance == 999) {
-        printf("[SR04] 前方无障碍 或 传感器异常\r\n");
+        printf("[SR04] 前方无障碍 或 传感器异常\n");
     } else {
-        printf("[SR04] 障碍物距离: %d cm\r\n", distance);
+        printf("[SR04] 障碍物距离: %d cm\n", distance);
     }
 
-    HAL_Delay(100); // 采样间隔 100ms，避免超声波余震干扰
-}
-}
+    HAL_Delay(1000); // 采样间隔 1000ms，避免超声波余震干扰
+    
+}}

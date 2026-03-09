@@ -112,15 +112,16 @@ int main(void)
   //  MPU6050_Test();
   //MPU6050_EularAngleTest();
   // Lora_Test();
-  SR04_Test;
+  printf("Hello World!\r\n");
+  SR04_Test();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      Buzzler_beep(100);
-      HAL_Delay(1000);
+      //Buzzler_beep(100);
+      //HAL_Delay(1000);
     //   printf("Hello World!\r\n");
     // HAL_Delay(1000);
     /* USER CODE END WHILE */
