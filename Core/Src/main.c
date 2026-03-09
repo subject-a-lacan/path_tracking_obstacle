@@ -31,6 +31,8 @@
 #include "stdio.h"
 #include "lora.h"
 #include "buzzler.h"
+#include "ultrasonic.h"
+#include "at8236.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,6 +112,7 @@ int main(void)
   //  MPU6050_Test();
   //MPU6050_EularAngleTest();
   // Lora_Test();
+  SR04_Test;
   /* USER CODE END 2 */
 
   /* Infinite loop */
