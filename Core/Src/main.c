@@ -110,14 +110,14 @@ int main(void)
   MX_TIM4_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  printf("Hello World!\r\n");
+  Motor_Test(500, 500);
   //  MPU6050_Test();
   //MPU6050_EularAngleTest();
   // Lora_Test();
-  printf("Hello World!\r\n");
-  Encoder_Test();
+  //Encoder_Test();
   // SR04_Test();
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)

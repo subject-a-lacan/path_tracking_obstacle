@@ -5,5 +5,11 @@
 #include "main.h"
 #include "i2c.h"
 
+extern TIM_HandleTypeDef htim1;
+
+
+void Motor_Init(void);
+void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm);
+void Motor_Test(int16_t left_pwm, int16_t right_pwm);
 
 #endif
