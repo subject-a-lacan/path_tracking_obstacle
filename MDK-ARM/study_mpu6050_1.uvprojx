@@ -615,6 +615,11 @@
               <FileType>1</FileType>
               <FilePath>..\Core\Src\ultrasonic.c</FilePath>
             </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\encoder.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

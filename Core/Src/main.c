@@ -33,6 +33,7 @@
 #include "buzzler.h"
 #include "ultrasonic.h"
 #include "at8236.h"
+#include "encoder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +114,8 @@ int main(void)
   //MPU6050_EularAngleTest();
   // Lora_Test();
   printf("Hello World!\r\n");
-  SR04_Test();
+  Encoder_Test();
+  // SR04_Test();
   /* USER CODE END 2 */
 
   /* Infinite loop */
