@@ -118,5 +118,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
+uint16_t adc_getValue(void) {
+    HAL_ADC_Start(&hadc1); // 启动ADC转换
+    HAL_ADC_PollForConversion(&hadc1,1);
+	  return HAL_ADC_GetValue(&hadc1);    
+}
 /* USER CODE END 1 */
