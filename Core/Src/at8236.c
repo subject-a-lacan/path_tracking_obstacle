@@ -68,3 +68,15 @@ void Motor_Test(int16_t left_pwm, int16_t right_pwm) {
         HAL_Delay(1000);
     }
 }
+void Motor_Test_IO(void) {
+    Motor_Init();
+    // PA9 高电平
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_SET);
+    // PA8 低电平
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+    // PA10 高电平
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
+    // PA11 低电平
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
+    
+}
