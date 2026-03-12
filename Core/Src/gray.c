@@ -1,6 +1,7 @@
 #include "gray.h"
+#include <stdio.h>
 
-
+No_MCU_Sensor gray_sensor; //测试专用
 /* 函数功能：采集8个通道的模拟值并进行均值滤波
    参数说明：result - 存储8个通道处理结果的数组 */
 void Get_Analog_value(unsigned short *result)
@@ -143,7 +144,7 @@ void No_MCU_Ganv_Sensor_Init(No_MCU_Sensor*sensor,unsigned short *Calibrated_whi
         Normal_Diff[i] = (double)Calibrated_white[i] - (double)Calibrated_black[i];
         sensor->Normal_factor[i] = sensor->bits / Normal_Diff[i];
     }
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET); //使能
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); //使能
     sensor->ok=1;  // 标记初始化完成
 }
 
@@ -200,4 +201,48 @@ unsigned char Get_Anolog_Value(No_MCU_Sensor*sensor,unsigned short *result)
     Get_Analog_value(sensor->Analog_value);  // 重新采集数据
     memcpy(result,sensor->Analog_value,16);
 		return 1;
+}
+void gray_test(void)
+{
+    // 1. 填入假定的校准数据 (上车后需修改为实际测得的黑白ADC均值)
+    unsigned short white_cal_data[8] = {1600, 1600, 1600, 1600, 1600, 1600, 1600, 1600}; 
+    unsigned short black_cal_data[8] = {100, 100, 100, 100, 100, 100, 100, 100}; 
+    unsigned short raw_analog[8] = {0}; // 模式二用的模拟量数组 
+    // 2. 初始化传感器
+    No_MCU_Ganv_Sensor_Init(&gray_sensor, white_cal_data, black_cal_data);
+
+    while(1)
+    {
+        // 3.1 刷新传感器数据 (走完底层的采集和二值化流程)
+        No_Mcu_Ganv_Sensor_Task_Without_tick(&gray_sensor);
+
+        // 3.2 提取封装好的 8 位数字状态 (它在内存里就是 01001100 这种形态)
+        unsigned char val = Get_Digtal_For_User(&gray_sensor);
+
+        // 3.3 强制拆解并以 0/1 的字符串形式打印出来！
+        // 这里的逻辑是：把 val 依次和 10000000(0x80), 01000000(0x40)... 进行与运算
+        // 如果结果不为 0，说明该位是 1，就打印 1；否则打印 0。
+        printf("Sensor (Bit7->Bit0): %d%d%d%d%d%d%d%d\r\n",
+            (val & 0x80 ? 1 : 0),
+            (val & 0x40 ? 1 : 0),
+            (val & 0x20 ? 1 : 0),
+            (val & 0x10 ? 1 : 0),
+            (val & 0x08 ? 1 : 0),
+            (val & 0x04 ? 1 : 0),
+            (val & 0x02 ? 1 : 0),
+            (val & 0x01 ? 1 : 0));
+// =========================================================
+        // 【模式二：打印模拟量 (原始ADC值)】 -> 默认注释，需要时解开
+        // =========================================================
+        
+        // if(Get_Anolog_Value(&gray_sensor, raw_analog))
+        // {
+        //     printf("%4d | %4d | %4d | %4d | %4d | %4d | %4d | %4d\r\n",
+        //            raw_analog[0], raw_analog[1], raw_analog[2], raw_analog[3], 
+        //            raw_analog[4], raw_analog[5], raw_analog[6], raw_analog[7]);
+        // }
+        
+        // 3.4 延时 1 秒
+        HAL_Delay(1000);
+    }
 }

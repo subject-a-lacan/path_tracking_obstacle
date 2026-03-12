@@ -66,6 +66,7 @@ extern "C" {
 /*************************** 函数声明区域 *****************************/
 // 初始化函数
 void No_MCU_Ganv_Sensor_Init_Frist(No_MCU_Sensor* sensor); // 首次初始化
+void gray_test(void); // 测试函数
 void No_MCU_Ganv_Sensor_Init(No_MCU_Sensor* sensor,unsigned short* Calibrated_white, unsigned short* Calibrated_black);// 带校准参数的初始化
 #ifndef Use_Timer
 // 任务处理函数
