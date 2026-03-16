@@ -219,7 +219,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    //伪并行更新传感器数据
+    //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     Left_Speed_Proc(&left_speed);
     Right_Speed_Proc(&right_speed); 
     SR04_Proc(&front_distance);
