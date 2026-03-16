@@ -5,10 +5,10 @@
 
 // --- 宏 1：函数门卫模式 ---
 // 如果时间未到，直接 return（跳出当前函数）
-#define PERIODIC(T) \
-    static uint32_t nxt = 0; \
-    if(HAL_GetTick() < nxt) return; \
-    nxt += (T);
+// #define PERIODIC(T) \
+//     static uint32_t nxt = 0; \
+//     if(HAL_GetTick() < nxt) return; \
+//     nxt += (T);
 
 // --- 宏 2：代码块包裹模式 (开始) ---
 // NAME 需要唯一，用于生成独立的计时变量
