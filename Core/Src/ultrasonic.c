@@ -104,3 +104,7 @@ void SR04_Test(void) {
     HAL_Delay(1000); // 采样间隔 1000ms，避免超声波余震干扰
     
 }}
+void SR04_Proc(uint16_t* distance){
+    PERIODIC(20); // 20ms周期
+    *distance = SR04_GetDistance();
+}

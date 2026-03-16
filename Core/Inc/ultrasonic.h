@@ -12,6 +12,6 @@
 void SR04_Init(void);
 uint16_t SR04_GetDistance(void);
 void SR04_Test(void);
-
+void SR04_Proc(uint16_t* distance);
 
 #endif

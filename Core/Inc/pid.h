@@ -2,6 +2,8 @@
 #define PID_H
 
 #include "main.h"
+#include "stdio.h"
+#include "encoder.h"
 typedef struct {
 	float Target;
 	float Actual;
@@ -20,6 +22,5 @@ typedef struct {
     float KdOut;	//不完全微分
 } PID_t;
 void PID_Update(PID_t *p);
-
 #endif // PID_H
 

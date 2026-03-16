@@ -106,11 +106,20 @@ typedef enum {
     CAR_STATE_OBSTACLE_AVOID = 2// 避障状态
 } CarState;
 volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
-//传感器的值
+
+//超声波+速度传感
 volatile int16_t  track_error = 0;    // 灰度传感器计算出的偏航偏差
 volatile uint16_t front_distance = 999; // 超声波前方距离（cm）
 volatile int16_t  left_speed = 0;     // 左轮当前速度（编码器反馈）
 volatile int16_t  right_speed = 0;    // 右轮当前速度（编码器反馈）
+
+//灰度传感器
+unsigned short Anolog[8] = {0};      // 存储当前模拟量值的数组
+unsigned short white[8] = {1155,2009,1528,2344,2320,1757,1721,1420}; // 存储白色校准值的数组 
+unsigned short black[8] = {67,72,72,72,73,74,73,64};     // 存储黑色校准值的数组
+unsigned short Normal[8];          // 归一化值数组
+No_MCU_Sensor sensor;              // 传感器数据结构体
+unsigned char Digtal;							 // 数字量
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -158,8 +167,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  //先调用init函数
-  
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -189,6 +198,11 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  //调用init函数
+  Motor_Init();
+  MPU6050_Init();
+  SR04_Init();
+  Encoder_Init();
   printf("What does heyiwei mean?\r\n");
   // gray_test();
   // Motor_Test(500, 500);
@@ -205,10 +219,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  
+    //伪并行更新传感器数据
+    Left_Speed_Proc(&left_speed);
+    Right_Speed_Proc(&right_speed); 
+    SR04_Proc(&front_distance);
+    Gray_Proc(&sensor, Normal, &track_error);
     /* USER CODE END WHILE */
-
+  
     /* USER CODE BEGIN 3 */
+    //下面是利用vofa调试时需要的代码
+    //printf("%.2f, %.2f, %.2f\r\n", yaw.Actual, speed.Actual, error.Actual);
+    //printf("%.2f, %.2f, %.2f\r\n", yaw.Out, speed.Out, error.Out);
   }
   /* USER CODE END 3 */
 }

@@ -246,3 +246,11 @@ void gray_test(void)
         HAL_Delay(1000);
     }
 }
+void Gray_Proc(No_MCU_Sensor* sensor,unsigned short Normal[],volatile int16_t* track_error){
+    PERIODIC(20); // 20ms周期
+    No_Mcu_Ganv_Sensor_Task_Without_tick(sensor);
+    Get_Normalize_For_User(sensor, Normal);       // 从结构体拷贝归一化值
+    // Digtal=Get_Digtal_For_User(&sensor);           // 获取数字量状态
+    // 计算角度线性偏移量
+    *track_error = CalculateNormalizedValue(Normal,1); //计算轨迹偏差值
+}
