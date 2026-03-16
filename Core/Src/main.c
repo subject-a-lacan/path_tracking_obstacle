@@ -36,6 +36,7 @@
 #include "encoder.h"
 #include "gray.h"
 #include "pid.h"
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
