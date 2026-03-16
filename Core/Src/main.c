@@ -35,6 +35,7 @@
 #include "at8236.h"
 #include "encoder.h"
 #include "gray.h"
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,13 +56,89 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+PID_t yaw={
+    .Target = 0,
+    .Actual = 0,
+    .Out = 0,
+    .Kp = 1.0f,
+    .Ki = 0.1f,
+    .Kd = 0.1f,
+    .Error_now = 0,
+    .Error_last = 0,
+    .ErrorInt = 0,
+    .OutMax = 1000,
+    .OutMin = -1000,
+    .KdOut = 0,
+};    // 定义PID结构体变量:循迹
+PID_t speed={
+    .Target = 0,
+    .Actual = 0,
+    .Out = 0,
+    .Kp = 1.0f,
+    .Ki = 0.1f,
+    .Kd = 0.1f,
+    .Error_now = 0,
+    .Error_last = 0,
+    .ErrorInt = 0,
+    .OutMax = 1000,
+    .OutMin = -1000,
+    .KdOut = 0,
+};  // 定义PID结构体变量：速度
+PID_t error={
+    .Target = 0,
+    .Actual = 0,
+    .Out = 0,
+    .Kp = 1.0f,
+    .Ki = 0.1f,
+    .Kd = 0.1f,
+    .Error_now = 0,
+    .Error_last = 0,
+    .ErrorInt = 0,
+    .OutMax = 1000,
+    .OutMin = -1000,
+    .KdOut = 0,
+};   // 定义PID结构体变量：速度差
 
+// 定义小车运行状态的枚举类型
+typedef enum {
+    CAR_STATE_TRACKING = 0,    // 循迹状态（默认/核心状态）
+    CAR_STATE_LOST_LINE_GO = 1,// 丢线直行状态
+    CAR_STATE_OBSTACLE_AVOID = 2// 避障状态
+} CarState;
+volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
+//传感器的值
+volatile int16_t  track_error = 0;    // 灰度传感器计算出的偏航偏差
+volatile uint16_t front_distance = 999; // 超声波前方距离（cm）
+volatile int16_t  left_speed = 0;     // 左轮当前速度（编码器反馈）
+volatile int16_t  right_speed = 0;    // 右轮当前速度（编码器反馈）
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+int32_t CalculateNormalizedValue(unsigned short Normal[8],uint8_t field)
+{
+    // 定义权值数组，从左到右对应-7,-5,-3,-1,1,3,5,7
+    const short weights[8] = {-7, -5, -3, -1, 1, 3, 5, 7};
+    
+    int32_t weighted_sum = 0;          // 加权和
+    int32_t original_sum = 0; // 原始数据和
+    static int last_value = 0;   // 上一次的值
+    
+    // 计算加权和和原始数据和
+    for (int i = 0; i < 8; i++) {
+				weighted_sum += 1024*(field?(4096-Normal[i]) * weights[i]:Normal[i] * weights[i]);  // 每个数据乘以对应权值
+				original_sum += field?(4096-Normal[i]):Normal[i];               // 累加原始数据
+    }
+    
+    // 计算并返回归一化值
+    if (original_sum != 0) { // 避免除以0的情况
+        last_value = weighted_sum / original_sum;
+        return last_value;
+    } else {
+        return last_value; // 如果原始数据和为0，返回上一次的值
+    }
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -81,7 +158,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  //先调用init函数
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -111,8 +189,8 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  printf("Hello World!\r\n");
-  gray_test();
+  printf("What does heyiwei mean?\r\n");
+  // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
   // MPU6050_Test();
@@ -120,16 +198,14 @@ int main(void)
   // Lora_Test();
   // Encoder_Test();
   // SR04_Test();
+  // Buzzler_beep_Test();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      //Buzzler_beep(100);
-      //HAL_Delay(1000);
-    //   printf("Hello World!\r\n");
-    // HAL_Delay(1000);
+  
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

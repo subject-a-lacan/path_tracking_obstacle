@@ -3,5 +3,5 @@
 
 #include "main.h"
 void Buzzler_beep(uint16_t duration_ms);
-
+void Buzzler_beep_Test(void);
 #endif 

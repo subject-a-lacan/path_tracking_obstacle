@@ -92,7 +92,7 @@ void No_MCU_Ganv_Sensor_Init_Frist(No_MCU_Sensor*sensor)
     sensor->ok=0;  // 标记未完成校准
 }
 
-/* 函数功能：传感器完整初始化（带校准参数）
+/* 函数功能：传感器完整初始化（带校准参数）                            这是主函数需要调用的初始化函数!
    参数说明：
    sensor - 传感器结构体指针
    Calibrated_white - 校准白值数组
