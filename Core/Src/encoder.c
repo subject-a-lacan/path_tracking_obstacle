@@ -51,11 +51,11 @@ void Encoder_Test(void) {
         HAL_Delay(1000);
     }
 }
-void Left_Speed_Proc(int16_t* left_speed){
+void Left_Speed_Proc(volatile int16_t* left_speed){
     PERIODIC(20); // 20ms周期
     *left_speed = Read_Encoder_Left();
 }
-void Right_Speed_Proc(int16_t* right_speed){
+void Right_Speed_Proc(volatile int16_t* right_speed){
     PERIODIC(20); // 20ms周期
     *right_speed = Read_Encoder_Right();
 }
