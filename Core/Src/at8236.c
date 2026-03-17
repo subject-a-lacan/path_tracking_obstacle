@@ -87,6 +87,7 @@ uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val
     if (reset_flag == 1) {
         avoid_step = 0;
         tick_cnt = 0;
+        flag_avoid_reset=0;
         return 0; // 复位完直接退出
     }
 
