@@ -123,7 +123,7 @@ uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val
             *left_pwm = 150;      // 左轮慢
             *right_pwm = 400;    // 右轮快，向左拐
             
-            // 【视觉回归终极判定】: 只要眼睛看到黑线，立刻结束！
+            // : 只要眼睛看到黑线，立刻结束！
             if (digital_val != 0xFF) { 
                 avoid_step = 0;  
                 tick_cnt = 0;
