@@ -68,3 +68,76 @@ void Motor_Test(int16_t left_pwm, int16_t right_pwm) {
         HAL_Delay(1000);
     }
 }
+/**
+  * @brief  非阻塞式避障机动函数 (专供 20ms 定时器中断调用)
+  * @param  left_pwm:  左轮目标PWM的指针
+  * @param  right_pwm: 右轮目标PWM的指针
+  * @param  digital_val: 灰度传感器8位数字量 (用于视觉回归检测)
+  * @param  reset_flag: 外部复位标志位 (传入1强制清零状态机，传入0正常运行)
+  * @retval 1: 避障彻底结束(找到线了) | 0: 正在避障中
+  */
+uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val, uint8_t reset_flag) 
+{
+    static uint8_t avoid_step = 0;   // 记录当前打到哪一套组合拳了
+    static uint16_t tick_cnt = 0;    // 记录当前动作执行了多少个 20ms
+
+    // =========================================================
+    // 状态机外部强制复位: 防止被意外打断后留下脏数据
+    // =========================================================
+    if (reset_flag == 1) {
+        avoid_step = 0;
+        tick_cnt = 0;
+        return 0; // 复位完直接退出
+    }
+
+    tick_cnt++; // 时间节拍 +1
+
+    switch (avoid_step) 
+    {
+        case 0: 
+            // 动作一：原地右转躲避障碍
+            *left_pwm = 400;     // 左轮正转
+            *right_pwm = -400;   // 右轮反转
+            
+            // 转
+            if (tick_cnt >= 12) { 
+                avoid_step = 1;  
+                tick_cnt = 0;  
+            }
+            break;
+
+        case 1: 
+            // 动作二：直行越过障碍物
+            *left_pwm = 400; 
+            *right_pwm = 400;
+            
+            // 直走
+            if (tick_cnt >= 86) { 
+                avoid_step = 2;
+                tick_cnt = 0;
+            }
+            break;
+
+        case 2: 
+            // 动作三：向左前方画弧线，准备切回赛道
+            *left_pwm = 150;      // 左轮慢
+            *right_pwm = 400;    // 右轮快，向左拐
+            
+            // 【视觉回归终极判定】: 只要眼睛看到黑线，立刻结束！
+            if (digital_val != 0xFF) { 
+                avoid_step = 0;  
+                tick_cnt = 0;
+                return 1;        // 报告：避障彻底完成！
+            }
+            
+            // 防跑飞：如果转了 3s 还没看到线，强行结束
+            if (tick_cnt >= 150) {
+                avoid_step = 0;
+                tick_cnt = 0;
+                return 1; 
+            }
+            break;
+    }
+    
+    return 0; // 仍在避障中
+}

@@ -1,6 +1,6 @@
 #include "gray.h"
 #include <stdio.h>
-
+#include "stdint.h"
 No_MCU_Sensor gray_sensor; //测试专用
 /* 函数功能：采集8个通道的模拟值并进行均值滤波
    参数说明：result - 存储8个通道处理结果的数组 */
@@ -246,11 +246,37 @@ void gray_test(void)
         HAL_Delay(1000);
     }
 }
+int32_t CalculateNormalizedValue(unsigned short Normal[8],uint8_t field)
+{
+    // 定义权值数组，从左到右对应-7,-5,-3,-1,1,3,5,7
+    const short weights[8] = {-7, -5, -3, -1, 1, 3, 5, 7};
+    
+    int32_t weighted_sum = 0;          // 加权和
+    int32_t original_sum = 0; // 原始数据和
+    static int last_value = 0;   // 上一次的值
+    
+    // 计算加权和和原始数据和
+    for (int i = 0; i < 8; i++) {
+				weighted_sum += 1024*(field?(4096-Normal[i]) * weights[i]:Normal[i] * weights[i]);  // 每个数据乘以对应权值
+				original_sum += field?(4096-Normal[i]):Normal[i];               // 累加原始数据
+    }
+    
+    // 计算并返回归一化值
+    if (original_sum != 0) { // 避免除以0的情况
+        last_value = weighted_sum / original_sum;
+        return last_value;
+    } else {
+        return last_value; // 如果原始数据和为0，返回上一次的值
+    }
+}
 void Gray_Proc(No_MCU_Sensor* sensor,unsigned short Normal[],volatile int16_t* track_error){
-    PERIODIC(20); // 20ms周期
+    PERIODIC(10); // 10ms周期
     No_Mcu_Ganv_Sensor_Task_Without_tick(sensor);
     Get_Normalize_For_User(sensor, Normal);       // 从结构体拷贝归一化值
     // Digtal=Get_Digtal_For_User(&sensor);           // 获取数字量状态
     // 计算角度线性偏移量
     *track_error = CalculateNormalizedValue(Normal,1); //计算轨迹偏差值
 }
+
+
+

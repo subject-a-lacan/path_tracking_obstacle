@@ -57,6 +57,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+/* 定义PID结构体变量:循迹
+   target:0
+   actual:track_error 由CalculateNormalizedValue得出
+   out:左右轮差速补偿
+*/
+
 PID_t yaw={
     .Target = 0,
     .Actual = 0,
@@ -70,8 +76,14 @@ PID_t yaw={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
-};    // 定义PID结构体变量:循迹
-PID_t speed={
+};    
+/*
+  定义PID结构体变量：左轮速度
+  target:期望速度
+  actual:left_speed 由Left_Speed_Proc给出
+  Out:PWM
+*/
+PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
@@ -84,7 +96,22 @@ PID_t speed={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
-};  // 定义PID结构体变量：速度
+};  
+
+PID_t speed_R={
+    .Target = 0,
+    .Actual = 0,
+    .Out = 0,
+    .Kp = 1.0f,
+    .Ki = 0.1f,
+    .Kd = 0.1f,
+    .Error_now = 0,
+    .Error_last = 0,
+    .ErrorInt = 0,
+    .OutMax = 1000,
+    .OutMin = -1000,
+    .KdOut = 0,
+};
 PID_t error={
     .Target = 0,
     .Actual = 0,
@@ -126,29 +153,7 @@ unsigned char Digtal;							 // 数字量
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-int32_t CalculateNormalizedValue(unsigned short Normal[8],uint8_t field)
-{
-    // 定义权值数组，从左到右对应-7,-5,-3,-1,1,3,5,7
-    const short weights[8] = {-7, -5, -3, -1, 1, 3, 5, 7};
-    
-    int32_t weighted_sum = 0;          // 加权和
-    int32_t original_sum = 0; // 原始数据和
-    static int last_value = 0;   // 上一次的值
-    
-    // 计算加权和和原始数据和
-    for (int i = 0; i < 8; i++) {
-				weighted_sum += 1024*(field?(4096-Normal[i]) * weights[i]:Normal[i] * weights[i]);  // 每个数据乘以对应权值
-				original_sum += field?(4096-Normal[i]):Normal[i];               // 累加原始数据
-    }
-    
-    // 计算并返回归一化值
-    if (original_sum != 0) { // 避免除以0的情况
-        last_value = weighted_sum / original_sum;
-        return last_value;
-    } else {
-        return last_value; // 如果原始数据和为0，返回上一次的值
-    }
-}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -204,12 +209,12 @@ int main(void)
   MPU6050_Init();
   SR04_Init();
   Encoder_Init();
-  printf("What does heyiwei mean?\r\n");
+  No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
   // MPU6050_Test();
-  // MPU6050_EularAngleTest();
+  MPU6050_EularAngleTest();
   // Lora_Test();
   // Encoder_Test();
   // SR04_Test();
@@ -220,11 +225,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // printf("What does heyiwei mean?\r\n");
+    // HAL_Delay(1000);
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     Left_Speed_Proc(&left_speed);
     Right_Speed_Proc(&right_speed); 
     SR04_Proc(&front_distance);
     Gray_Proc(&sensor, Normal, &track_error);
+    Digtal=Get_Digtal_For_User(&sensor); 
     /* USER CODE END WHILE */
   
     /* USER CODE BEGIN 3 */

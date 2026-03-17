@@ -60,9 +60,9 @@ uint16_t SR04_GetDistance(void) {
         // // 只要避障，所以只关心近处！
         // // 假设避障安全距离是 20cm，这里设定最多只等 3 毫秒 (对应距离约 50cm)
         // // 超过 3 毫秒说明前方 50cm 内无障碍，直接强行退出，保护20ms PID 周期
-        // if ((HAL_GetTick() - start_time) > 3) {
-        //     return 999; 
-        // }
+        if ((HAL_GetTick() - start_time) > 3) {
+            return 999; 
+        }
     }
 
     // 5. 计算经过的时间并转化为距离
@@ -105,6 +105,6 @@ void SR04_Test(void) {
     
 }}
 void SR04_Proc(volatile uint16_t* distance){
-    PERIODIC(20); // 20ms周期
+    PERIODIC(50); // 50ms周期
     *distance = SR04_GetDistance();
 }

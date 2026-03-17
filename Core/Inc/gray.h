@@ -69,6 +69,7 @@ void No_MCU_Ganv_Sensor_Init_Frist(No_MCU_Sensor* sensor); // 首次初始化
 void gray_test(void); // 测试函数
 void No_MCU_Ganv_Sensor_Init(No_MCU_Sensor* sensor,unsigned short* Calibrated_white, unsigned short* Calibrated_black);// 带校准参数的初始化
 void Gray_Proc(No_MCU_Sensor* sensor,unsigned short Normal[],volatile int16_t* track_error); // 更新灰度传感器数据
+int32_t CalculateNormalizedValue(unsigned short Normal[8],uint8_t field);
 #ifndef Use_Timer
 // 任务处理函数
 void No_Mcu_Ganv_Sensor_Task_Without_tick(No_MCU_Sensor* sensor); // 无时基版本
