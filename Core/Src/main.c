@@ -158,6 +158,7 @@ void StateMachine_Update(void)
     static uint8_t lost_line_cnt = 0;
     static uint8_t find_line_cnt = 0;
     static uint8_t obstacle_cnt = 0;
+    
 
     switch (car_state) 
     {
