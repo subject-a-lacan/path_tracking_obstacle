@@ -153,7 +153,8 @@ volatile uint8_t flag_avoid_done = 0;  // 接收中断避障完成的信息
 volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
 /* USER CODE END PV */
 void StateMachine_Update(void) 
-{
+{   
+    PERIODIC(15); // 15ms周期调用一次状态机更新函数
     // 定义静态防抖计数器，函数退出后值不会消失
     static uint8_t lost_line_cnt = 0;
     static uint8_t find_line_cnt = 0;
@@ -261,6 +262,92 @@ void StateMachine_Update(void)
             break;
     }
 }
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) 
+{
+    if (htim->Instance == TIM1) 
+    {
+        static uint8_t pid_cnt = 0;
+        pid_cnt++;
+        
+        // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
+        if (pid_cnt >= 20) 
+        {
+            pid_cnt = 0;
+            
+            // 局部变量，存放算出来的“目标期望速度”
+            int16_t target_L = 0; 
+            int16_t target_R = 0;
+            int16_t base_speed = 300; // 基础直行期望速度，后续可调
+            
+            // ==========================================================
+            // 第一步：外环决策  - 根据状态计算目标速度
+            // ==========================================================
+            switch (car_state) 
+            {
+                case 0: // CAR_STATE_TRACKING (循迹模式)
+                    // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
+                    base_speed = 300 - (33 * abs(track_error) / 1024);
+                    if (base_speed < 100) base_speed = 100; // 兜底最低速度
+                    
+                    // 2. 转向环 PID 计算
+                    yaw.Target = 0;
+                    yaw.Actual = track_error;
+                    PID_Update(&yaw);
+                    
+                    // 3. 差速分配给左右轮目标速度
+                    target_L = base_speed - (int16_t)yaw.Out;
+                    target_R = base_speed + (int16_t)yaw.Out;
+                    break;
+
+                case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
+                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
+                    error.Target = 0;
+                    error.Actual = left_speed - right_speed; // 实际差速
+                    PID_Update(&error);
+                    
+                    // 2. 补偿分配给左右轮
+                    target_L = base_speed - (int16_t)error.Out;
+                    target_R = base_speed + (int16_t)error.Out;
+                    break;
+
+                case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
+                    // 1. 拦截主函数发来的复位
+                    if (flag_avoid_reset == 1) {
+                        Avoidance_Run(&target_L, &target_R, sensor.Digtal, 1);
+                        flag_avoid_reset = 0; // 执行完复位，重置标志位
+                    }
+                    // 2. 正常执行避障非阻塞状态机
+                    else {
+                        // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
+                        if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
+                            flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
+                        }
+                    }
+                    break;
+            }
+
+            // ==========================================================
+            // 第二步：内环执行 
+            // ==========================================================
+            
+            // 1. 计算左轮速度环 PID
+            speed_L.Target = target_L;
+            speed_L.Actual = left_speed; // 编码器读回来的真实速度
+            PID_Update(&speed_L);
+            
+            // 2. 计算右轮速度环 PID
+            speed_R.Target = target_R;
+            speed_R.Actual = right_speed; 
+            PID_Update(&speed_R);
+            
+            // ==========================================================
+            // 第三步：硬件输出 - 经过你封装接口发给 AT8236
+            // ==========================================================
+            // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
+            Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
+        }
+    }
+}
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
@@ -321,11 +408,12 @@ int main(void)
   SR04_Init();
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
+  HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
   // MPU6050_Test();
-  MPU6050_EularAngleTest();
+  //MPU6050_EularAngleTest();
   // Lora_Test();
   // Encoder_Test();
   // SR04_Test();
