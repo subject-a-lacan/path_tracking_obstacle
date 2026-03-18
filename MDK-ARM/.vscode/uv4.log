@@ -1,0 +1,9 @@
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
+Build target 'study_mpu6050_1'
+compiling main.c...
+../Core/Src/main.c(153): error:  #147: declaration is incompatible with "volatile uint16_t flag_avoid_reset"  (declared at line 113 of "../Core/Inc/main.h")
+  volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
+../Core/Src/main.c: 0 warnings, 1 error
+"study_mpu6050_1\study_mpu6050_1.axf" - 1 Error(s), 0 Warning(s).
+Target not created.
+Build Time Elapsed:  00:00:01

@@ -3,6 +3,7 @@
 #include "main.h"
 void MPU6050_Init(void);
 void MPU6050_Update(void);
+void MPU6050_Calibrate(int sample_count);
 float MPU6050_GetAx(void);
 float MPU6050_GetAy(void);
 float MPU6050_GetAz(void);
@@ -15,6 +16,3 @@ float MPU6050_GetYaw(void);
 float MPU6050_GetPitch(void);
 float MPU6050_GetRoll(void);
 #endif
-
-
-

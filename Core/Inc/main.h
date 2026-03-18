@@ -110,7 +110,7 @@ void Error_Handler(void);
 #define MPU_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-extern volatile uint16_t flag_avoid_reset;
+extern volatile uint8_t flag_avoid_reset;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
