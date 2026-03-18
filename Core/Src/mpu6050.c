@@ -9,12 +9,11 @@ static float ax, ay, az; // 加速度计的结果，单位g
 static float temperature; // 温度计的结果，单位摄氏度
 static float gx, gy, gz; // 单位°/s   
 static float yaw, pitch, roll; // 欧拉角，单位°
+static float gx_offset, gy_offset, gz_offset;
+
 // @简介：向寄存器写值
 // @参数 reg - 要写入的寄存器的地址
 // @参数 value - 要写入的值
-
-
-
 static void MPU6050_WriteReg(uint8_t reg, uint8_t value) {
     HAL_I2C_Mem_Write(&hi2c1, MPU6050_ADDR, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, 100);
 }
@@ -51,6 +50,33 @@ void MPU6050_Init(void) {
 }
 
 //
+//@简介：计算零偏
+//10000次采样等待时间大概30-40s，效果稳定两分钟0.5度，1000次采样等待时间大概5-8s，效果不太稳定，有效果好的也有差的，5000次采样等待时间大概10-15s，效果比较好，有效果好的也有差的，10000次采样等待时间大概30-40s，效果稳定两分钟0.5度，
+//1000次采样等待时间大概5-8s，效果不太稳定，有效果好的也有差的，
+//5000次采样等待时间大概10-15s
+void MPU6050_Calibrate(int sample_count) {
+    int32_t sum_gx = 0, sum_gy = 0, sum_gz = 0;
+
+    for (int i = 0; i < sample_count; i++) {
+        // 读取陀螺仪原始数据
+        int16_t raw_x = (int16_t)((MPU6050_ReadReg(0x43) << 8) | MPU6050_ReadReg(0x44));
+        int16_t raw_y = (int16_t)((MPU6050_ReadReg(0x45) << 8) | MPU6050_ReadReg(0x46));
+        int16_t raw_z = (int16_t)((MPU6050_ReadReg(0x47) << 8) | MPU6050_ReadReg(0x48));
+
+        sum_gx += raw_x;
+        sum_gy += raw_y;
+        sum_gz += raw_z;
+
+        HAL_Delay(1); // 延时等待新数据就绪
+    }
+
+    // 计算平均值作为零偏
+    gx_offset = sum_gx / sample_count;
+    gy_offset = sum_gy / sample_count;
+    gz_offset = sum_gz / sample_count;
+}
+
+//
 // @简介：更新mpu6050的值
 //
 void MPU6050_Update(void)
@@ -78,9 +104,9 @@ void MPU6050_Update(void)
     temperature = (float)temp_raw / 340.0f + 36.53f;
 
     // 陀螺仪换算 (±2000°/s 量程: 16.4 LSB/°/s)
-    gx = gx_raw * 6.1035e-2f;
-    gy = gy_raw * 6.1035e-2f;
-    gz = gz_raw * 6.1035e-2f;
+    gx = (gx_raw-gx_offset) * 6.1035e-2f;
+    gy = (gy_raw-gy_offset) * 6.1035e-2f;
+    gz = (gz_raw-gz_offset) * 6.1035e-2f;
 }
 //
 // @简介：获取x轴向加速度，单位g
@@ -123,7 +149,7 @@ float MPU6050_GetGz(void){
 //
 // @简介：MPU6050的进程函数
 //
-void App_MPU6050_Proc(void)
+void APP_MPU6050_Proc(void)
 {
     PERIODIC(5); 
     MPU6050_Update(); 

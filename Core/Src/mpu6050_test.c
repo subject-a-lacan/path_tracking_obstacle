@@ -67,12 +67,13 @@ static void USART2_Proc(void)
 void MPU6050_EularAngleTest(void) 
 {
     MPU6050_Init();
+    MPU6050_Calibrate(5000);
     while(1)
     {
         // 2并行执行两个任务
         
         // 任务 A：每 5ms 更新一次欧拉角计算
-        App_MPU6050_Proc();
+        APP_MPU6050_Proc();
         
         // 任务 B：每 10ms 向电脑上报一次数据
         USART2_Proc();
