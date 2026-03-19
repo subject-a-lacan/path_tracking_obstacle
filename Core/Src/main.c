@@ -326,6 +326,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     target_L = base_speed + (int16_t)error.Out;
                     target_R = base_speed - (int16_t)error.Out;
                     break;
+                    
 
                 case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
                     // 1. 拦截主函数发来的复位
