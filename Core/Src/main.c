@@ -152,6 +152,8 @@ unsigned char Digtal;							 // 数字量
 
 volatile uint8_t flag_avoid_done = 0;  // 接收中断避障完成的信息
 volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
+
+uint8_t rx_cmd = 0; // 存放串口发来的调参命令
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -321,8 +323,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     PID_Update(&error);
                     
                     // 2. 补偿分配给左右轮
-                    target_L = base_speed - (int16_t)error.Out;
-                    target_R = base_speed + (int16_t)error.Out;
+                    target_L = base_speed + (int16_t)error.Out;
+                    target_R = base_speed - (int16_t)error.Out;
                     break;
 
                 case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
@@ -361,6 +363,61 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
             Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
         }
+    }
+}
+// 串口调参执行函数
+// 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
+void UART_PID_Tune(uint8_t cmd) 
+{
+    float step = 0.1f; // 每次增减的步长
+
+    switch(cmd) 
+    {
+        // ================= yaw (循迹转向) =================
+        case 1:  yaw.Kp += step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
+        case 2:  yaw.Kp -= step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
+        case 3:  yaw.Ki += step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
+        case 4:  yaw.Ki -= step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
+        case 5:  yaw.Kd += step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+        case 6:  yaw.Kd -= step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+
+        // ================= speed_L (左轮速度) =================
+        case 7:  speed_L.Kp += step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
+        case 8:  speed_L.Kp -= step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
+        case 9:  speed_L.Ki += step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
+        case 10: speed_L.Ki -= step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
+        case 11: speed_L.Kd += step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+        case 12: speed_L.Kd -= step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+
+        // ================= speed_R (右轮速度) =================
+        case 13: speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
+        case 14: speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
+        case 15: speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        case 16: speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        case 17: speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+        case 18: speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+
+        // ================= error (丢线直行同步) =================
+        case 19: error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
+        case 20: error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
+        case 21: error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
+        case 22: error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
+        case 23: error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
+        case 24: error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
+        
+        default: break; // 收到 1~24 之外的数字，不理会
+    }
+}
+//回调函数
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2) // 确认是串口2发来的
+    {
+        // 1. 调用调参函数，处理刚收到的命令
+        UART_PID_Tune(rx_cmd);
+        
+        // 2. 极其重要：处理完后，必须再次开启接收中断，否则只能调一次！
+        HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);
     }
 }
 /* USER CODE END 0 */
@@ -411,6 +468,7 @@ int main(void)
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
+  HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
   // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
