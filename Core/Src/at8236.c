@@ -78,7 +78,7 @@ void Motor_Test(int16_t left_pwm, int16_t right_pwm) {
   */
 uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val, uint8_t reset_flag) 
 {
-    static uint8_t avoid_step = 0;   // 记录当前打到哪一套组合拳了
+    static uint8_t avoid_step = 0;   // 记录当前到哪一步了
     static uint16_t tick_cnt = 0;    // 记录当前动作执行了多少个 20ms
 
     // =========================================================
@@ -141,4 +141,27 @@ uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val
     }
     
     return 0; // 仍在避障中
+}
+// Avoidance_Run 的测试函数 中断函数里avoidance把速度设为PWM 但是传给速度环的必须是脉冲数 对不上 这是测试函数
+//用于把avoidance_run里的PWM数字改成脉冲
+void Avoidance_Speed_Test(uint16_t a) 
+{
+    // 输出PWM
+    Motor_SetPWM(a, a); 
+    
+    // 清空一下前期的杂乱脉冲
+    Read_Encoder_Left();
+    Read_Encoder_Right();
+
+    while(1) 
+    {
+        HAL_Delay(20); // 严格死等 20ms，模拟定时器中断的周期
+        
+        // 读取这 20ms 内产生的真实脉冲数 
+        int16_t pulses_L = Read_Encoder_Left();
+        int16_t pulses_R = Read_Encoder_Right();
+        
+        // 打印出来
+        printf("PWM[150, -150] -> 脉冲/20ms: 左=%d, 右=%d\r\n", pulses_L, pulses_R);
+    }
 }

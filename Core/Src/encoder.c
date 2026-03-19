@@ -23,7 +23,7 @@ void Encoder_Init(void) {
  * @retval 增量脉冲数 (有符号 16 位整数)  这样子即使翻转突变65535 返回的也是正确的负值
  */
 int16_t Read_Encoder_Left(void) {
-    int16_t count = (int16_t)__HAL_TIM_GET_COUNTER(&htim4);
+    int16_t count = (int16_t)__HAL_TIM_GET_COUNTER(&htim4);    //由于代码在中断函数里执行 因此返回的是20ms内的增量脉冲数
     __HAL_TIM_SET_COUNTER(&htim4, 0);
     return count;
 }

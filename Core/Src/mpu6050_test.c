@@ -39,7 +39,7 @@ void MPU6050_Test(void)
 static void USART2_Proc(void)
 {
     // 每 10ms 执行一次发送
-    PERIODIC(10)
+    PERIODIC(10);
     
     // 1. 获取所有最新的物理量数据
     float ax = MPU6050_GetAx();

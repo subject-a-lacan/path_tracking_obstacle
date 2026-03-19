@@ -21,10 +21,7 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_H
 #define __MAIN_H
-#define PERIODIC(T) \
-    static uint32_t nxt = 0; \
-    if(HAL_GetTick() < nxt) return; \
-    nxt += (T);
+
 #ifdef __cplusplus
 extern "C" {
 #endif

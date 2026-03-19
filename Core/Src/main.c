@@ -152,6 +152,20 @@ unsigned char Digtal;							 // 数字量
 volatile uint8_t flag_avoid_done = 0;  // 接收中断避障完成的信息
 volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
 /* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+int fputc(int ch, FILE *f)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1,HAL_MAX_DELAY);
+    return ch;
+}
 void StateMachine_Update(void) 
 {   
     PERIODIC(15); // 15ms周期调用一次状态机更新函数
@@ -295,8 +309,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     PID_Update(&yaw);
                     
                     // 3. 差速分配给左右轮目标速度
-                    target_L = base_speed - (int16_t)yaw.Out;
-                    target_R = base_speed + (int16_t)yaw.Out;
+                    target_L = base_speed + (int16_t)yaw.Out;
+                    target_R = base_speed - (int16_t)yaw.Out;
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
@@ -332,12 +346,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             
             // 1. 计算左轮速度环 PID
             speed_L.Target = target_L;
-            speed_L.Actual = left_speed; // 编码器读回来的真实速度
+            speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
             PID_Update(&speed_L);
             
             // 2. 计算右轮速度环 PID
             speed_R.Target = target_R;
-            speed_R.Actual = right_speed; 
+            speed_R.Actual = Read_Encoder_Right(); 
             PID_Update(&speed_R);
             
             // ==========================================================
@@ -347,19 +361,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
         }
     }
-}
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-int fputc(int ch, FILE *f)
-{
-    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1,HAL_MAX_DELAY);
-    return ch;
 }
 /* USER CODE END 0 */
 
@@ -426,19 +427,30 @@ int main(void)
   {
     // printf("What does heyiwei mean?\r\n");
     // HAL_Delay(1000);
+
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
-    Left_Speed_Proc(&left_speed);
-    Right_Speed_Proc(&right_speed); 
+    // Left_Speed_Proc(&left_speed);    这两行代码是大错特错 读取速度必须在中断函数里 否则数据不是实时的！
+    // Right_Speed_Proc(&right_speed); 
     SR04_Proc(&front_distance);
     Gray_Proc(&sensor, Normal, &track_error);
     Digtal=Get_Digtal_For_User(&sensor); 
     StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
-  
+
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
-    //printf("%.2f, %.2f, %.2f\r\n", yaw.Actual, speed.Actual, error.Actual);
-    //printf("%.2f, %.2f, %.2f\r\n", yaw.Out, speed.Out, error.Out);
+        // PERIODIC(1000);
+        // printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",
+        //     error.Actual, error.Target, error.Out,
+        //     yaw.Actual, yaw.Target, yaw.Out,
+        //     speed_L.Actual, speed_L.Target, speed_L.Out,
+        //     speed_R.Actual, speed_R.Target, speed_R.Out,
+        //     error.Kp, error.Ki, error.Kd,
+        //     yaw.Kp, yaw.Ki, yaw.Kd,
+        //     speed_L.Kp, speed_L.Ki, speed_L.Kd,
+        //     speed_R.Kp, speed_R.Ki, speed_R.Kd);
+    //串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
+    // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
   }
   /* USER CODE END 3 */
 }
