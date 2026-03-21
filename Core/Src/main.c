@@ -486,8 +486,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    printf("he yi wei!?\r\n");
-    HAL_Delay(1000);
+    // printf("he yi wei!?\r\n");
+    // HAL_Delay(1000);
 
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     // Left_Speed_Proc(&left_speed);    这两行代码是大错特错 读取速度必须在中断函数里 否则数据不是实时的！
