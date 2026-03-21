@@ -134,7 +134,8 @@ typedef enum {
     CAR_STATE_LOST_LINE_GO = 1,// 丢线直行状态
     CAR_STATE_OBSTACLE_AVOID = 2// 避障状态
 } CarState;
-volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
+// volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
+volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
 
 //超声波+速度传感
 volatile int16_t  track_error = 0;    // 灰度传感器计算出的偏航偏差
@@ -185,187 +186,187 @@ void StateMachine_Update(void)
         // ==========================================
         case CAR_STATE_TRACKING:
             // 优先级最高：判断是否需要避障 (小于20cm)
-            if (front_distance < 20) {
-                if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
-                    car_state = CAR_STATE_OBSTACLE_AVOID; 
+            // if (front_distance < 20) {
+            //     if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
+            //         car_state = CAR_STATE_OBSTACLE_AVOID; 
                     
-                    // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
-                    flag_avoid_reset = 1; 
+            //         // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
+            //         flag_avoid_reset = 1; 
                     
-                    obstacle_cnt = 0;      
-                }
-            } 
-            else {
-                obstacle_cnt = 0; 
+            //         obstacle_cnt = 0;      
+            //     }
+            // } 
+            // else {
+            //     obstacle_cnt = 0; 
                 
-                // 次优先级：判断是否丢线 (0xFF代表8个灯全白)
-                if (sensor.Digtal == 0xFF) { 
-                    if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
-                        car_state = CAR_STATE_LOST_LINE_GO; 
+            //     // 次优先级：判断是否丢线 (0xFF代表8个灯全白)
+            //     if (sensor.Digtal == 0xFF) { 
+            //         if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
+            //             car_state = CAR_STATE_LOST_LINE_GO; 
                         
-                        // 清零直行同步环的历史误差，防止切入直行瞬间抽搐
-                        error.ErrorInt = 0;
-                        error.Error_last = 0;
-                        error.KdOut = 0;
+            //             // 清零直行同步环的历史误差，防止切入直行瞬间抽搐
+            //             error.ErrorInt = 0;
+            //             error.Error_last = 0;
+            //             error.KdOut = 0;
                         
-                        lost_line_cnt = 0;
-                    }
-                } else {
-                    lost_line_cnt = 0; 
-                }
-            }
+            //             lost_line_cnt = 0;
+            //         }
+            //     } else {
+            //         lost_line_cnt = 0; 
+            //     }
+            // }
             break;
 
         // ==========================================
         // 状态 2：丢线直行 (通过双轮编码器同步 PID 保持直走)
         // ==========================================
         case CAR_STATE_LOST_LINE_GO:
-            // 防撞！
-            if (front_distance < 20) {
-                if (++obstacle_cnt > 4) {
-                    car_state = CAR_STATE_OBSTACLE_AVOID;
+            // // 防撞！
+            // if (front_distance < 20) {
+            //     if (++obstacle_cnt > 4) {
+            //         car_state = CAR_STATE_OBSTACLE_AVOID;
                     
-                    // 同样需要通知中断层复位避障动作
-                    flag_avoid_reset = 1; 
+            //         // 同样需要通知中断层复位避障动作
+            //         flag_avoid_reset = 1; 
                     
-                    obstacle_cnt = 0;
-                }
-            } 
-            else {
-                obstacle_cnt = 0;
+            //         obstacle_cnt = 0;
+            //     }
+            // } 
+            // else {
+            //     obstacle_cnt = 0;
                 
-                // 判断是否重新踩到了黑线
-                if (sensor.Digtal != 0xFF) { // 只要不是全白
-                    if (++find_line_cnt > 4) { // 连续确认4次，防抖
-                        car_state = CAR_STATE_TRACKING; // 成功找回黑线，切回循迹
+            //     // 判断是否重新踩到了黑线
+            //     if (sensor.Digtal != 0xFF) { // 只要不是全白
+            //         if (++find_line_cnt > 4) { // 连续确认4次，防抖
+            //             car_state = CAR_STATE_TRACKING; // 成功找回黑线，切回循迹
                         
-                        // 为接下来的循迹转向环清除数据
-                        yaw.ErrorInt = 0;
-                        yaw.Error_last = 0;
-                        yaw.KdOut = 0;
-                        speed_L.ErrorInt = 0;
-                        speed_L.Error_last = 0; 
-                        speed_L.KdOut = 0;
-                        speed_R.ErrorInt = 0; 
-                        speed_R.Error_last = 0;
-                        speed_R.KdOut = 0;
-                        find_line_cnt = 0;
-                    }
-                } else {
-                    find_line_cnt = 0;
-                }
-            }
+            //             // 为接下来的循迹转向环清除数据
+            //             yaw.ErrorInt = 0;
+            //             yaw.Error_last = 0;
+            //             yaw.KdOut = 0;
+            //             speed_L.ErrorInt = 0;
+            //             speed_L.Error_last = 0; 
+            //             speed_L.KdOut = 0;
+            //             speed_R.ErrorInt = 0; 
+            //             speed_R.Error_last = 0;
+            //             speed_R.KdOut = 0;
+            //             find_line_cnt = 0;
+            //         }
+            //     } else {
+            //         find_line_cnt = 0;
+            //     }
+            // }
             break;
 
         // ==========================================
         // 状态 3：避障模式
         // ==========================================
         case CAR_STATE_OBSTACLE_AVOID:
-            // 此时底层定时器中断正在高频调用 Avoidance_Run 控制电机
+            // // 此时底层定时器中断正在高频调用 Avoidance_Run 控制电机
             
-            if (flag_avoid_done == 1) { 
+            // if (flag_avoid_done == 1) { 
                 
-                // 避障彻底完成，严格按照逻辑直接切回循迹状态！
-                car_state = CAR_STATE_TRACKING; 
+            //     // 避障彻底完成，严格按照逻辑直接切回循迹状态！
+            //     car_state = CAR_STATE_TRACKING; 
                 
-                // 避障刚结束车身大概率有偏角，必须清零转向 PID 重新平滑切入赛道
-                yaw.ErrorInt = 0;
-                yaw.Error_last = 0;
-                yaw.KdOut = 0;
+            //     // 避障刚结束车身大概率有偏角，必须清零转向 PID 重新平滑切入赛道
+            //     yaw.ErrorInt = 0;
+            //     yaw.Error_last = 0;
+            //     yaw.KdOut = 0;
                 
-                // 收起捷报，清空信箱，为下一次避障做准备
-                flag_avoid_done = 0; 
-            }
+            //     // 收起捷报，清空信箱，为下一次避障做准备
+            //     flag_avoid_done = 0; 
+            // }
             break;
     }
 }
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) 
-{
-    if (htim->Instance == TIM1) 
-    {
-        static uint8_t pid_cnt = 0;
-        pid_cnt++;
+// void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) 
+// {
+//     if (htim->Instance == TIM1) 
+//     {
+//         static uint8_t pid_cnt = 0;
+//         pid_cnt++;
         
-        // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
-        if (pid_cnt >= 20) 
-        {
-            pid_cnt = 0;
+//         // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
+//         if (pid_cnt >= 20) 
+//         {
+//             pid_cnt = 0;
             
-            // 局部变量，存放算出来的“目标期望速度”
-            int16_t target_L = 0; 
-            int16_t target_R = 0;
-            int16_t base_speed = 300; // 基础直行期望速度，后续可调
+//             // 局部变量，存放算出来的“目标期望速度”
+//             int16_t target_L = 0; 
+//             int16_t target_R = 0;
+//             int16_t base_speed = 300; // 基础直行期望速度，后续可调
             
-            // ==========================================================
-            // 第一步：外环决策  - 根据状态计算目标速度
-            // ==========================================================
-            switch (car_state) 
-            {
-                case 0: // CAR_STATE_TRACKING (循迹模式)
-                    // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
-                    base_speed = 300 - (33 * abs(track_error) / 1024);
-                    if (base_speed < 100) base_speed = 100; // 兜底最低速度
+//             // ==========================================================
+//             // 第一步：外环决策  - 根据状态计算目标速度
+//             // ==========================================================
+//             switch (car_state) 
+//             {
+//                 case 0: // CAR_STATE_TRACKING (循迹模式)
+//                     // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
+//                     // base_speed = 300 - (33 * abs(track_error) / 1024);
+//                     if (base_speed < 100) base_speed = 100; // 兜底最低速度
                     
-                    // 2. 转向环 PID 计算
-                    yaw.Target = 0;
-                    yaw.Actual = track_error;
-                    PID_Update(&yaw);
+//                     // 2. 转向环 PID 计算
+//                     yaw.Target = 0;
+//                     yaw.Actual = track_error;
+//                     PID_Update(&yaw);
                     
-                    // 3. 差速分配给左右轮目标速度
-                    target_L = base_speed + (int16_t)yaw.Out;
-                    target_R = base_speed - (int16_t)yaw.Out;
-                    break;
+//                     // 3. 差速分配给左右轮目标速度
+//                     target_L = base_speed + (int16_t)yaw.Out;
+//                     target_R = base_speed - (int16_t)yaw.Out;
+//                     break;
 
-                case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    error.Target = 0;
-                    error.Actual = left_speed - right_speed; // 实际差速
-                    PID_Update(&error);
+//                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
+//                     // 1. 同步环 PID 计算 (让左右轮速度差为 0)
+//                     error.Target = 0;
+//                     error.Actual = left_speed - right_speed; // 实际差速
+//                     PID_Update(&error);
                     
-                    // 2. 补偿分配给左右轮
-                    target_L = base_speed + (int16_t)error.Out;
-                    target_R = base_speed - (int16_t)error.Out;
-                    break;
+//                     // 2. 补偿分配给左右轮
+//                     target_L = base_speed + (int16_t)error.Out;
+//                     target_R = base_speed - (int16_t)error.Out;
+//                     break;
                     
 
-                case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
-                    // 1. 拦截主函数发来的复位
-                    if (flag_avoid_reset == 1) {
-                        Avoidance_Run(&target_L, &target_R, sensor.Digtal, 1);
-                        flag_avoid_reset = 0; // 执行完复位，重置标志位
-                    }
-                    // 2. 正常执行避障非阻塞状态机
-                    else {
-                        // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
-                        if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
-                            flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
-                        }
-                    }
-                    break;
-            }
+//                 case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
+//                     // 1. 拦截主函数发来的复位
+//                     if (flag_avoid_reset == 1) {
+//                         Avoidance_Run(&target_L, &target_R, sensor.Digtal, 1);
+//                         flag_avoid_reset = 0; // 执行完复位，重置标志位
+//                     }
+//                     // 2. 正常执行避障非阻塞状态机
+//                     else {
+//                         // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
+//                         if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
+//                             flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
+//                         }
+//                     }
+//                     break;
+//             }
 
-            // ==========================================================
-            // 第二步：内环执行 
-            // ==========================================================
+//             // ==========================================================
+//             // 第二步：内环执行 
+//             // ==========================================================
             
-            // 1. 计算左轮速度环 PID
-            speed_L.Target = target_L;
-            speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
-            PID_Update(&speed_L);
+//             // 1. 计算左轮速度环 PID
+//             speed_L.Target = target_L;
+//             speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
+//             PID_Update(&speed_L);
             
-            // 2. 计算右轮速度环 PID
-            speed_R.Target = target_R;
-            speed_R.Actual = Read_Encoder_Right(); 
-            PID_Update(&speed_R);
+//             // 2. 计算右轮速度环 PID
+//             speed_R.Target = target_R;
+//             speed_R.Actual = Read_Encoder_Right(); 
+//             PID_Update(&speed_R);
             
-            // ==========================================================
-            // 第三步：硬件输出 - 经过你封装接口发给 AT8236
-            // ==========================================================
-            // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
-            Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
-        }
-    }
-}
+//             // ==========================================================
+//             // 第三步：硬件输出 - 经过你封装接口发给 AT8236
+//             // ==========================================================
+//             // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
+//             Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
+//         }
+//     }
+// }
 // 串口调参执行函数
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
@@ -470,7 +471,7 @@ int main(void)
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
-  // gray_test();
+  // gray_test();+
   // Motor_Test(500, 500);
   // Motor_Test_IO();
   // MPU6050_Test();
@@ -485,16 +486,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // printf("What does heyiwei mean?\r\n");
-    // HAL_Delay(1000);
+    printf("he yi wei!?\r\n");
+    HAL_Delay(1000);
 
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     // Left_Speed_Proc(&left_speed);    这两行代码是大错特错 读取速度必须在中断函数里 否则数据不是实时的！
     // Right_Speed_Proc(&right_speed); 
-    SR04_Proc(&front_distance);
-    Gray_Proc(&sensor, Normal, &track_error);
-    Digtal=Get_Digtal_For_User(&sensor); 
-    StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
+    // SR04_Proc(&front_distance);
+    // Gray_Proc(&sensor, Normal, &track_error);
+    // Digtal=Get_Digtal_For_User(&sensor); 
+    // StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -509,7 +510,7 @@ int main(void)
         //     yaw.Kp, yaw.Ki, yaw.Kd,
         //     speed_L.Kp, speed_L.Ki, speed_L.Kd,
         //     speed_R.Kp, speed_R.Ki, speed_R.Kd);
-    //串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
+    // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
   }
   /* USER CODE END 3 */
