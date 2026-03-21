@@ -416,7 +416,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART2) // 确认是串口2发来的
     {
         // 1. 调用调参函数，处理刚收到的命令
-        UART_PID_Tune(rx_cmd);
+        uint8_t cmd = rx_cmd - '0';
+        UART_PID_Tune(cmd);
         
         // 2. 极其重要：处理完后，必须再次开启接收中断，否则只能调一次！
         HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);
