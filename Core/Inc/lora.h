@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 #include "main.h"
-void Lora_Test(void);
+void ESP8266_Init(char *ssid, char *pwd, char *ip, char *port);
 
 #endif
