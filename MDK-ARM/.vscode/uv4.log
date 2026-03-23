@@ -1,9 +1,21 @@
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target 'study_mpu6050_1'
 compiling main.c...
-../Core/Src/main.c(153): error:  #147: declaration is incompatible with "volatile uint16_t flag_avoid_reset"  (declared at line 113 of "../Core/Inc/main.h")
-  volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
-../Core/Src/main.c: 0 warnings, 1 error
-"study_mpu6050_1\study_mpu6050_1.axf" - 1 Error(s), 0 Warning(s).
-Target not created.
+../Core/Src/main.c(178): warning:  #177-D: variable "lost_line_cnt"  was declared but never referenced
+      static uint8_t lost_line_cnt = 0;
+../Core/Src/main.c(179): warning:  #177-D: variable "find_line_cnt"  was declared but never referenced
+      static uint8_t find_line_cnt = 0;
+../Core/Src/main.c(180): warning:  #177-D: variable "obstacle_cnt"  was declared but never referenced
+      static uint8_t obstacle_cnt = 0;
+../Core/Src/main.c: 3 warnings, 0 errors
+compiling lora.c...
+..\Core\Src\lora.c(24): warning:  #223-D: function "strlen" declared implicitly
+      HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+..\Core\Src\lora.c(41): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\lora.c: 2 warnings, 0 errors
+linking...
+Program Size: Code=16444 RO-data=312 RW-data=252 ZI-data=1772  
+FromELF: creating hex file...
+"study_mpu6050_1\study_mpu6050_1.axf" - 0 Error(s), 5 Warning(s).
 Build Time Elapsed:  00:00:01
