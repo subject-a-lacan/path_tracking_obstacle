@@ -461,6 +461,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM1_Init();
+  //要填本机IPESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
   /* USER CODE BEGIN 2 */
   //调用init函数
   Motor_Init();
