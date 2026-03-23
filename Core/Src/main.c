@@ -394,14 +394,14 @@ void UART_PID_Tune(uint8_t cmd)
         // ================= speed_R (右轮速度) =================
         case 13: speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
         case 14: speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 15: speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 16: speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        //case 15: speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        //case 16: speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
         case 17: speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
         case 18: speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
 
         // ================= error (丢线直行同步) =================
         case 19: error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 20: error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
+        //case 20: error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
         case 21: error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
         case 22: error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
         case 23: error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
