@@ -37,6 +37,7 @@
 #include "gray.h"
 #include "pid.h"
 #include "task.h"
+#include "steer.h"
 //hywhywhyw
 /* USER CODE END Includes */
 
@@ -471,11 +472,15 @@ int main(void)
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
+  ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
+  // Steer_SetAngle(90);
+  // HAL_Delay(10);
+  // Steer_Stop();
   // gray_test();+
   // Motor_Test(500, 500);
   // Motor_Test_IO();
   // MPU6050_Test();
-  //MPU6050_EularAngleTest();
+  // MPU6050_EularAngleTest();
   // Lora_Test();
   // Encoder_Test();
   // SR04_Test();
@@ -486,7 +491,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // printf("he yi wei!?\r\n");
+    //  printf("he yi wei!?\r\n");
     // HAL_Delay(1000);
 
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)

@@ -18,6 +18,7 @@
 "study_mpu6050_1\usart.o"
 "study_mpu6050_1\stm32f1xx_it.o"
 "study_mpu6050_1\stm32f1xx_hal_msp.o"
+"study_mpu6050_1\steer.o"
 "study_mpu6050_1\stm32f1xx_hal_gpio_ex.o"
 "study_mpu6050_1\stm32f1xx_hal_adc.o"
 "study_mpu6050_1\stm32f1xx_hal_adc_ex.o"
@@ -35,7 +36,7 @@
 "study_mpu6050_1\stm32f1xx_hal_tim.o"
 "study_mpu6050_1\stm32f1xx_hal_tim_ex.o"
 "study_mpu6050_1\stm32f1xx_hal_uart.o"
-"study_mpu6050_1\system_stm32f1xx_1.o"
+"study_mpu6050_1\system_stm32f1xx.o"
 --library_type=microlib --strict --scatter "study_mpu6050_1\study_mpu6050_1.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
