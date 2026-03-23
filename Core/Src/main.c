@@ -461,7 +461,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM1_Init();
-  //要填本机IPESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
+
   /* USER CODE BEGIN 2 */
   //调用init函数
   Motor_Init();
@@ -471,6 +471,7 @@ int main(void)
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
+  //要填本机IPESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
   // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
