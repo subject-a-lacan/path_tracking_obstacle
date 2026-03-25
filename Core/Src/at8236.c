@@ -19,7 +19,7 @@ void Motor_Init(void) {
  * @brief  设置左右电机的 PWM 占空比及方向
  * @param  left_pwm: 左电机控制量 (-1000 到 1000)
  * @param  right_pwm: 右电机控制量 (-1000 到 1000)
- */
+ */  //左边是右轮
 void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     
     // 1. 左轮安全限幅 (防止超出 ARR=999 导致定时器溢出异常)
@@ -39,7 +39,6 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
         // 反转：AIN1 输 0，AIN2 输 PWM (传入绝对值)
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, -left_pwm);
-    }
 
     // 4. 右轮控制逻辑
     if (right_pwm >= 0) {
@@ -51,7 +50,7 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -right_pwm);
     }
-}
+}}
 
 /**
  * @brief  电机测试函数，设置左右轮 PWM 并每1s发送轮速
@@ -59,14 +58,14 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
  * @param  right_pwm: 右轮 PWM（-999 ~ 999）
  */
 void Motor_Test(int16_t left_pwm, int16_t right_pwm) {
-    Motor_Init();
+    // Motor_Init();
     Motor_SetPWM(left_pwm, right_pwm);
-    while (1) {
-        float left_speed  = Calc_Physical_Speed(Read_Encoder_Left());
-        float right_speed = Calc_Physical_Speed(Read_Encoder_Right());
-        printf("L:%.3f m/s  R:%.3f m/s\r\n", left_speed, right_speed);
-        HAL_Delay(1000);
-    }
+    // while (1) {
+    //     float left_speed  = Calc_Physical_Speed(Read_Encoder_Left());
+    //     float right_speed = Calc_Physical_Speed(Read_Encoder_Right());
+    //     printf("L:%.3f m/s  R:%.3f m/s\r\n", left_speed, right_speed);
+    //     HAL_Delay(1000);
+    // }
 }
 /**
   * @brief  非阻塞式避障机动函数 (专供 20ms 定时器中断调用)
