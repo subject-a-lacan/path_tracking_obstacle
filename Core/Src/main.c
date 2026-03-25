@@ -38,6 +38,7 @@
 #include "pid.h"
 #include "task.h"
 #include "steer.h"
+#include "IMU.h"
 //hywhywhyw
 /* USER CODE END Includes */
 
@@ -423,6 +424,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);
     }
 }
+
+void IMU_Test(void)
+{
+    float angles[3];
+    PERIODIC(100); // 100ms周期打印一次
+    IMU_getYawPitchRoll(angles);
+    printf("%.2f,%.2f,%.2f\r\n", angles[0], angles[1], angles[2]);
+}
 /* USER CODE END 0 */
 
 /**
@@ -466,14 +475,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //调用init函数
   Motor_Init();
-  MPU6050_Init();
+  // MPU6050_Init(); // IMU_init() internally calls MPU6050_Init()
   SR04_Init();
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
-  ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
-  // Steer_SetAngle(90);
+  // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
+  Steer_SetAngle(90);
+  IMU_init();
   // HAL_Delay(10);
   // Steer_Stop();
   // gray_test();+
@@ -491,6 +501,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    IMU_Test();
     //  printf("he yi wei!?\r\n");
     // HAL_Delay(1000);
 

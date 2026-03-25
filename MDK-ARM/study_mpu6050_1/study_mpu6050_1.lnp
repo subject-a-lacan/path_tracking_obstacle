@@ -19,6 +19,7 @@
 "study_mpu6050_1\stm32f1xx_it.o"
 "study_mpu6050_1\stm32f1xx_hal_msp.o"
 "study_mpu6050_1\steer.o"
+"study_mpu6050_1\imu.o"
 "study_mpu6050_1\stm32f1xx_hal_gpio_ex.o"
 "study_mpu6050_1\stm32f1xx_hal_adc.o"
 "study_mpu6050_1\stm32f1xx_hal_adc_ex.o"
