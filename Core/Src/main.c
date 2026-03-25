@@ -153,7 +153,8 @@ unsigned char Digtal;							 // 数字量
 volatile uint8_t flag_avoid_done = 0;  // 接收中断避障完成的信息
 volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
 
-uint8_t rx_cmd = 0; // 存放串口发来的调参命令
+uint8_t rx_byte = 0;    // 每次接收1个字节的缓存
+uint8_t rx_state = 0;   // 接收状态机：0代表等帧头，1代表等指令
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -375,38 +376,38 @@ void UART_PID_Tune(uint8_t cmd)
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
-        case 1:  yaw.Kp += step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 2:  yaw.Kp -= step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 3:  yaw.Ki += step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 4:  yaw.Ki -= step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 5:  yaw.Kd += step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
-        case 6:  yaw.Kd -= step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+        case 'a':  yaw.Kp += step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
+        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
+        case 'c':  yaw.Ki += step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
+        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
+        case 'e':  yaw.Kd += step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
 
         // ================= speed_L (左轮速度) =================
-        case 7:  speed_L.Kp += step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 8:  speed_L.Kp -= step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 9:  speed_L.Ki += step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 10: speed_L.Ki -= step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 11: speed_L.Kd += step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
-        case 12: speed_L.Kd -= step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
+        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
+        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
+        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
+        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
 
         // ================= speed_R (右轮速度) =================
-        case 13: speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 14: speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 15: speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 16: speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 17: speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
-        case 18: speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
+        case 'n':   speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
+        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
+        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
 
         // ================= error (丢线直行同步) =================
-        case 19: error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 20: error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 21: error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 22: error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 23: error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        case 24: error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        
-        default: break; // 收到 1~24 之外的数字，不理会
+        case 's': error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
+        case 't': error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
+        case 'u': error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
+        case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
+        case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
+        case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
+
+        default: break; 
     }
 }
 //回调函数
@@ -414,11 +415,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2) // 确认是串口2发来的
     {
-        // 1. 调用调参函数，处理刚收到的命令
-        UART_PID_Tune(rx_cmd);
-        
-        // 2. 极其重要：处理完后，必须再次开启接收中断，否则只能调一次！
-        HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);
+        // 串口数据状态机解析
+        switch (rx_state) 
+        {
+            case 0: // 【状态0：苦等帧头】
+                if (rx_byte == 'C') { // 假设帧头是字符大写的 'C'
+                    rx_state = 1;     // 收到帧头了！状态机切到状态1
+                }
+                // 如果收到的不是 'C'，状态机还是 0，这个错误字节直接被无视
+                break;
+                
+            case 1: // 【状态1：接收指令并执行】
+                UART_PID_Tune(rx_byte); // 把收到的 1~24 的数字丢进去执行
+                rx_state = 0;           // 极其关键：执行完立刻复位，重新等下一个 'C'
+                break;
+        }
+        // 极其重要：处理完后，必须再次开启接收中断，否则只能调一次！
+        HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
     }
 }
 /* USER CODE END 0 */
@@ -470,8 +483,9 @@ int main(void)
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
-  HAL_UART_Receive_IT(&huart2, &rx_cmd, 1);// 开启 USART2 的接收中断，准备接收调参命令
-  //要填本机IPESP8266_Init("F521F520","f521f520","192.168.100.15","8080");
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);// 开启 USART2 的接收中断，准备接收调参命令
+  //ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //GONG
+  //ESP8266_Init("F521F520","f521f520","192.168.100.14","8080");   //XU
   // gray_test();
   // Motor_Test(500, 500);
   // Motor_Test_IO();
