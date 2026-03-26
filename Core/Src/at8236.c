@@ -33,12 +33,13 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     // 3. 左轮控制逻辑 (正数正转，负数反转)
     if (left_pwm >= 0) {
         // 正转：AIN1 输 PWM，AIN2 输 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, left_pwm);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
     } else {
         // 反转：AIN1 输 0，AIN2 输 PWM (传入绝对值)
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, -left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, -left_pwm);
+    }
 
     // 4. 右轮控制逻辑
     if (right_pwm >= 0) {
@@ -50,7 +51,7 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -right_pwm);
     }
-}}
+}
 
 /**
  * @brief  电机测试函数，设置左右轮 PWM 并每1s发送轮速
