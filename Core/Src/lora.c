@@ -22,7 +22,7 @@ void ESP8266_Init(char *ssid, char *pwd, char *ip, char *port) {
     // 2. 连接 WiFi 
     sprintf(buf, "AT+CWJAP=\"%s\",\"%s\"\r\n", ssid, pwd);
     HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
-    HAL_Delay(1000);
+    HAL_Delay(5000);
 
     // 3. 设置单连接模式
     HAL_UART_Transmit(&huart2, (uint8_t*)"AT+CIPMUX=0\r\n", 13, 100);

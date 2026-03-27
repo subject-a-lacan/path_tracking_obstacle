@@ -144,11 +144,8 @@ uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val
 }
 // Avoidance_Run 的测试函数 中断函数里avoidance把速度设为PWM 但是传给速度环的必须是脉冲数 对不上 这是测试函数
 //用于把avoidance_run里的PWM数字改成脉冲
-void Avoidance_Speed_Test(uint16_t a) 
+void Avoidance_Speed_Test(void) 
 {
-    // 输出PWM
-    Motor_SetPWM(a, a); 
-    
     // 清空一下前期的杂乱脉冲
     Read_Encoder_Left();
     Read_Encoder_Right();
@@ -162,6 +159,6 @@ void Avoidance_Speed_Test(uint16_t a)
         int16_t pulses_R = Read_Encoder_Right();
         
         // 打印出来
-        printf("PWM[150, -150] -> 脉冲/20ms: 左=%d, 右=%d\r\n", pulses_L, pulses_R);
+        printf("脉冲/20ms: 右=%d, 左=%d\r\n", pulses_L, pulses_R);//由于硬件问题右轮的编码器接反了，所以左轮的脉冲数显示在右边，右轮的脉冲数显示在左边
     }
 }

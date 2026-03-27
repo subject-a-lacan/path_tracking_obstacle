@@ -341,7 +341,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     // // 2. 正常执行避障非阻塞状态机
                     // else {
                     //     // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
-                    //     if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
+                    // if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
                     //         flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
                     //     }
                     // }
@@ -408,7 +408,8 @@ void UART_PID_Tune(uint8_t cmd)
         case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
         case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        
+        case 'y': Motor_SetPWM(280, 280);break;
+        case 'z': Motor_SetPWM(0, 0);break;
         default: break; // 其他不理会
     }
 }
@@ -494,18 +495,17 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_byte, 1);// 开启 USART2 的接收中断，准备接收调参命令
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  // ESP8266_Init("F521F520","f521f520","192.168.100.14","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.13","8080");   //这是Xu的
   // Steer_SetAngle(90);
-  IMU_init();         
+  // IMU_init();         
   // HAL_Delay(10);
   // Steer_Stop();
   // gray_test();
-  Motor_SetPWM(300, 300);
+  // Motor_SetPWM(320, 320);
   // Motor_Test_IO();
   // MPU6050_Test();
   // MPU6050_EularAngleTest();
-  // Lora_Test();
-   // Avoidance_Speed_Test(500);  //单位统一函数
+  Avoidance_Speed_Test();  //单位统一函数
   // Encoder_Test();
   // SR04_Test();
   // Buzzler_beep_Test();
@@ -517,7 +517,7 @@ int main(void)
   {
     // IMU_Test();
     //  printf("he yi wei!?\r\n");
-    // HAL_Delay(800);
+    //  HAL_Delay(800);
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     // Left_Speed_Proc(&left_speed);    这两行代码是大错特错 读取速度必须在中断函数里 否则数据不是实时的！
     // Right_Speed_Proc(&right_speed); 
