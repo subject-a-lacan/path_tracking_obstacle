@@ -19,7 +19,7 @@ void Motor_Init(void) {
  * @brief  设置左右电机的 PWM 占空比及方向
  * @param  left_pwm: 左电机控制量 (-1000 到 1000)
  * @param  right_pwm: 右电机控制量 (-1000 到 1000)
- */  //左边是右轮
+ */  
 void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     
     // 1. 左轮安全限幅 (防止超出 ARR=999 导致定时器溢出异常)
@@ -33,23 +33,23 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     // 3. 左轮控制逻辑 (正数正转，负数反转)
     if (left_pwm >= 0) {
         // 正转：AIN1 输 PWM，AIN2 输 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, left_pwm);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
     } else {
         // 反转：AIN1 输 0，AIN2 输 PWM (传入绝对值)
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, -left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -left_pwm);
     }
 
     // 4. 右轮控制逻辑
     if (right_pwm >= 0) {
         // 正转：BIN1 输 PWM，BIN2 输 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, right_pwm);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, right_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
     } else {
         // 反转：BIN1 输 0，BIN2 输 PWM (传入绝对值)
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -right_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, -right_pwm);
     }
 }
 
@@ -159,6 +159,6 @@ void Avoidance_Speed_Test(void)
         int16_t pulses_R = Read_Encoder_Right();
         
         // 打印出来
-        printf("脉冲/20ms: 右=%d, 左=%d\r\n", pulses_L, pulses_R);//由于硬件问题右轮的编码器接反了，所以左轮的脉冲数显示在右边，右轮的脉冲数显示在左边
+        printf("脉冲/20ms: 右=%d, 左=%d\r\n", pulses_L, pulses_R);
     }
 }
