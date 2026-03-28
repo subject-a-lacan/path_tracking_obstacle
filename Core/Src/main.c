@@ -501,11 +501,11 @@ int main(void)
   // HAL_Delay(10);
   // Steer_Stop();
   // gray_test();
-  Motor_SetPWM(320, 320);
+  // Motor_SetPWM(320, 320);
   // Motor_Test_IO();
   // MPU6050_Test();
   // MPU6050_EularAngleTest();
-  // Avoidance_Speed_Test();  //单位统一函数
+  Avoidance_Speed_Test();  //单位统一函数
   // Encoder_Test();
   // SR04_Test();
   // Buzzler_beep_Test();
