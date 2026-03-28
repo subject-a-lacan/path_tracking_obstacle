@@ -19,7 +19,7 @@ void Motor_Init(void) {
  * @brief  设置左右电机的 PWM 占空比及方向
  * @param  left_pwm: 左电机控制量 (-1000 到 1000)
  * @param  right_pwm: 右电机控制量 (-1000 到 1000)
- */
+ */  
 void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     
     // 1. 左轮安全限幅 (防止超出 ARR=999 导致定时器溢出异常)
@@ -33,23 +33,23 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
     // 3. 左轮控制逻辑 (正数正转，负数反转)
     if (left_pwm >= 0) {
         // 正转：AIN1 输 PWM，AIN2 输 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, left_pwm);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
     } else {
         // 反转：AIN1 输 0，AIN2 输 PWM (传入绝对值)
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, -left_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -left_pwm);
     }
 
     // 4. 右轮控制逻辑
     if (right_pwm >= 0) {
         // 正转：BIN1 输 PWM，BIN2 输 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, right_pwm);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, right_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
     } else {
         // 反转：BIN1 输 0，BIN2 输 PWM (传入绝对值)
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, -right_pwm);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, -right_pwm);
     }
 }
 
@@ -59,14 +59,14 @@ void Motor_SetPWM(int16_t left_pwm, int16_t right_pwm) {
  * @param  right_pwm: 右轮 PWM（-999 ~ 999）
  */
 void Motor_Test(int16_t left_pwm, int16_t right_pwm) {
-    Motor_Init();
+    // Motor_Init();
     Motor_SetPWM(left_pwm, right_pwm);
-    while (1) {
-        float left_speed  = Calc_Physical_Speed(Read_Encoder_Left());
-        float right_speed = Calc_Physical_Speed(Read_Encoder_Right());
-        printf("L:%.3f m/s  R:%.3f m/s\r\n", left_speed, right_speed);
-        HAL_Delay(1000);
-    }
+    // while (1) {
+    //     float left_speed  = Calc_Physical_Speed(Read_Encoder_Left());
+    //     float right_speed = Calc_Physical_Speed(Read_Encoder_Right());
+    //     printf("L:%.3f m/s  R:%.3f m/s\r\n", left_speed, right_speed);
+    //     HAL_Delay(1000);
+    // }
 }
 /**
   * @brief  非阻塞式避障机动函数 (专供 20ms 定时器中断调用)
@@ -144,11 +144,8 @@ uint8_t Avoidance_Run(int16_t *left_pwm, int16_t *right_pwm, uint8_t digital_val
 }
 // Avoidance_Run 的测试函数 中断函数里avoidance把速度设为PWM 但是传给速度环的必须是脉冲数 对不上 这是测试函数
 //用于把avoidance_run里的PWM数字改成脉冲
-void Avoidance_Speed_Test(uint16_t a) 
+void Avoidance_Speed_Test(void) 
 {
-    // 输出PWM
-    Motor_SetPWM(a, a); 
-    
     // 清空一下前期的杂乱脉冲
     Read_Encoder_Left();
     Read_Encoder_Right();
@@ -162,6 +159,6 @@ void Avoidance_Speed_Test(uint16_t a)
         int16_t pulses_R = Read_Encoder_Right();
         
         // 打印出来
-        printf("PWM[150, -150] -> 脉冲/20ms: 左=%d, 右=%d\r\n", pulses_L, pulses_R);
+        printf("脉冲/20ms: 右=%d, 左=%d\r\n", pulses_L, pulses_R);
     }
 }
