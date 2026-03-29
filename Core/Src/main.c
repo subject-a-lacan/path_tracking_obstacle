@@ -330,7 +330,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     // error.Target = 0;
                     // error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
                     // PID_Update(&error);
-                    // 2. 补偿分配给左右轮
+                    // // 2. 补偿分配给左右轮
                     // target_L = base_speed + (int16_t)error.Out;
                     // target_R = base_speed - (int16_t)error.Out;
                     break;
@@ -357,12 +357,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // ==========================================================
             
             // 1. 计算左轮速度环 PID
-            // speed_L.Target = target_L;
+            speed_L.Target = target_L;
            
             PID_Update(&speed_L);
             
             // 2. 计算右轮速度环 PID
-            // speed_R.Target = target_R;
+            speed_R.Target = target_R;
            
             PID_Update(&speed_R);
             if(speed_L.Out>400)speed_L.Out=400;
