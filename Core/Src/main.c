@@ -79,6 +79,7 @@ PID_t yaw={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=1,
 };    
 /*
   定义PID结构体变量：左轮速度
@@ -90,8 +91,8 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 6.0f,
-    .Ki = 0.1f,
+    .Kp = 7.6f,
+    .Ki = 1.1f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -99,14 +100,15 @@ PID_t speed_L={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=1,
 };  
 
 PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 6.0f,
-    .Ki = 0.1f,
+    .Kp = 7.5f,
+    .Ki = 1.0f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -114,13 +116,14 @@ PID_t speed_R={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=1,
 };
 PID_t error={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.5f,
-    .Ki = 0.05f,
+    .Kp = 0.0f,
+    .Ki = 0.0f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -128,6 +131,7 @@ PID_t error={
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=0,
 };   // 定义PID结构体变量：速度差
 
 // 定义小车运行状态的枚举类型
@@ -323,12 +327,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
                     // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    error.Target = 0;
-                    error.Actual = left_speed - right_speed; // 实际差速
-                    PID_Update(&error);
+                    // error.Target = 0;
+                    // error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
+                    // PID_Update(&error);
                     // 2. 补偿分配给左右轮
-                    target_L = base_speed + (int16_t)error.Out;
-                    target_R = base_speed - (int16_t)error.Out;
+                    // target_L = base_speed + (int16_t)error.Out;
+                    // target_R = base_speed - (int16_t)error.Out;
                     break;
                     
 
@@ -353,23 +357,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // ==========================================================
             
             // 1. 计算左轮速度环 PID
-            speed_L.Target = target_L;
+            // speed_L.Target = target_L;
            
             PID_Update(&speed_L);
             
             // 2. 计算右轮速度环 PID
-            speed_R.Target = target_R;
+            // speed_R.Target = target_R;
            
             PID_Update(&speed_R);
-            
+            if(speed_L.Out>400)speed_L.Out=400;
+            if(speed_R.Out>400)speed_R.Out=400; 
             // ==========================================================
             // 第三步：硬件输出 - 经过你封装接口发给 AT8236
             // ==========================================================
             // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
+            if(error.cmd==1){
             Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
         }
+        else{
+          Motor_SetPWM(0, 0);
+        }
     }
-}
+}}
 // 串口调参执行函数
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
@@ -408,8 +417,14 @@ void UART_PID_Tune(uint8_t cmd)
         case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
         case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        case 'y': Motor_SetPWM(280, 280);break;
-        case 'z': Motor_SetPWM(0, 0);break;
+        case 'y': 
+                  speed_L.Target=75;
+                  speed_R.Target=75;
+                  error.cmd=1;
+                  break;
+        case 'z': 
+                  error.cmd=0;
+                  break;
         default: break; // 其他不理会
     }
 }

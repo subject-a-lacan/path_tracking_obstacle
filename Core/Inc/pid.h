@@ -20,6 +20,7 @@ typedef struct {
 	float OutMax;
 	float OutMin;
     float KdOut;	//不完全微分
+	volatile uint16_t cmd;
 } PID_t;
 void PID_Update(PID_t *p);
 #endif // PID_H
