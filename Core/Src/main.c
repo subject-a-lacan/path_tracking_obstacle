@@ -90,9 +90,9 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
+    .Kp = 6.0f,
     .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -105,9 +105,9 @@ PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
+    .Kp = 6.0f,
     .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -119,9 +119,9 @@ PID_t error={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
-    .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kp = 0.5f,
+    .Ki = 0.05f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -299,7 +299,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             int16_t target_L = 0; 
             int16_t target_R = 0;
             int16_t base_speed = 100; // 基础直行期望速度，后续可调
-            
+             speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
+             speed_R.Actual = Read_Encoder_Right(); 
             // ==========================================================
             // 第一步：外环决策  - 根据状态计算目标速度
             // ==========================================================
@@ -322,13 +323,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
                     // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    // error.Target = 0;
-                    // error.Actual = left_speed - right_speed; // 实际差速
-                    // PID_Update(&error);
-                    
-                    // // 2. 补偿分配给左右轮
-                    // target_L = base_speed + (int16_t)error.Out;
-                    // target_R = base_speed - (int16_t)error.Out;
+                    error.Target = 0;
+                    error.Actual = left_speed - right_speed; // 实际差速
+                    PID_Update(&error);
+                    // 2. 补偿分配给左右轮
+                    target_L = base_speed + (int16_t)error.Out;
+                    target_R = base_speed - (int16_t)error.Out;
                     break;
                     
 
@@ -353,20 +353,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // ==========================================================
             
             // 1. 计算左轮速度环 PID
-            // speed_L.Target = target_L;
-            // speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
-            // PID_Update(&speed_L);
+            speed_L.Target = target_L;
+           
+            PID_Update(&speed_L);
             
             // 2. 计算右轮速度环 PID
-            // speed_R.Target = target_R;
-            // speed_R.Actual = Read_Encoder_Right(); 
-            // PID_Update(&speed_R);
+            speed_R.Target = target_R;
+           
+            PID_Update(&speed_R);
             
             // ==========================================================
             // 第三步：硬件输出 - 经过你封装接口发给 AT8236
             // ==========================================================
             // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
-            // Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
+            Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
         }
     }
 }
@@ -505,7 +505,7 @@ int main(void)
   // Motor_Test_IO();
   // MPU6050_Test();
   // MPU6050_EularAngleTest();
-  Avoidance_Speed_Test();  //单位统一函数
+  // Avoidance_Speed_Test();  //单位统一函数
   // Encoder_Test();
   // SR04_Test();
   // Buzzler_beep_Test();
@@ -529,19 +529,20 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
-        // PERIODIC(1000);
-        // printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",
-        //     error.Actual, error.Target, error.Out,
-        //     yaw.Actual, yaw.Target, yaw.Out,
-        //     speed_L.Actual, speed_L.Target, speed_L.Out,
-        //     speed_R.Actual, speed_R.Target, speed_R.Out,
-        //     error.Kp, error.Ki, error.Kd,
-        //     yaw.Kp, yaw.Ki, yaw.Kd,
-        //     speed_L.Kp, speed_L.Ki, speed_L.Kd,
-        //     speed_R.Kp, speed_R.Ki, speed_R.Kd);
+        HAL_Delay(1000);// 100ms周期打印一次
+        printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",
+            error.Actual, error.Target, error.Out,
+            yaw.Actual, yaw.Target, yaw.Out,
+            speed_L.Actual, speed_L.Target, speed_L.Out,
+            speed_R.Actual, speed_R.Target, speed_R.Out,
+            error.Kp, error.Ki, error.Kd,
+            yaw.Kp, yaw.Ki, yaw.Kd,
+            speed_L.Kp, speed_L.Ki, speed_L.Kd,
+            speed_R.Kp, speed_R.Ki, speed_R.Kd);
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
   }
+  return 0;
   /* USER CODE END 3 */
 }
 
