@@ -408,7 +408,7 @@ void UART_PID_Tune(uint8_t cmd)
         case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
         case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        case 'y': Motor_SetPWM(380, 380);break;
+        case 'y': Motor_SetPWM(280, 280);break;
         case 'z': Motor_SetPWM(0, 0);break;
         default: break; // 其他不理会
     }
@@ -495,7 +495,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
   HAL_UART_Receive_IT(&huart2, &rx_byte, 1);// 开启 USART2 的接收中断，准备接收调参命令
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.18","8080");   //这是Xu的
   // Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
