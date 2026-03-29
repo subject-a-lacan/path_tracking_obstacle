@@ -286,7 +286,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         static uint8_t pid_cnt = 0;
         pid_cnt++;
-        
+        speed_L.Actual = Read_Encoder_Left();
+        speed_R.Actual = Read_Encoder_Right();
         // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
         if (pid_cnt >= 20) 
         {
@@ -318,14 +319,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    error.Target = 0;
-                    error.Actual = left_speed - right_speed; // 实际差速
-                    PID_Update(&error);
-                    
-                    // 2. 补偿分配给左右轮
-                    target_L = base_speed + (int16_t)error.Out;
-                    target_R = base_speed - (int16_t)error.Out;
+                    // 同步环 PID 计算 (让左右轮速度差为 0)
+                    target_L = 75;
+                    target_R = 75;
                     break;
                     
 
