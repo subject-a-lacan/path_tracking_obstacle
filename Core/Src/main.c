@@ -70,9 +70,9 @@ PID_t yaw={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
-    .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kp = 0.008f,
+    .Ki = 0.0f,
+    .Kd = 0.005f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -122,7 +122,7 @@ PID_t error={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 5.0f,
+    .Kp = 0.01f,
     .Ki = 0.0f,
     .Kd = 0.0f,
     .Error_now = 0,
@@ -151,8 +151,8 @@ volatile int16_t  right_speed = 0;    // 右轮当前速度（编码器反馈）
 
 //灰度传感器
 unsigned short Anolog[8] = {0};      // 存储当前模拟量值的数组
-unsigned short white[8] = {1155,2009,1528,2344,2320,1757,1721,1420}; // 存储白色校准值的数组 
-unsigned short black[8] = {67,72,72,72,73,74,73,64};     // 存储黑色校准值的数组
+unsigned short white[8] = {1392, 2178, 1391, 2178, 1548, 1483, 1553, 1476}; // 存储白色校准值的数组 
+unsigned short black[8] = {81,708,81,708,316,145,320,143};   // 存储黑色校准值的数组
 unsigned short Normal[8];          // 归一化值数组
 No_MCU_Sensor sensor;              // 传感器数据结构体
 unsigned char Digtal;							 // 数字量
@@ -312,15 +312,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 case 0: // CAR_STATE_TRACKING (循迹模式)
                     // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
-                    base_speed = 100 - (33 * abs(track_error) / 1024);
-                    if (base_speed < 250) base_speed = 250; // 兜底最低速度
+                    base_speed = 40 - (4 * abs(track_error) / 1024);
+                    if (base_speed < 30) base_speed = 30; // 兜底最低速度
                     // // 2. 转向环 PID 计算
                     yaw.Target = 0;
                     yaw.Actual = track_error;
                     PID_Update(&yaw);
                     // // 3. 差速分配给左右轮目标速度
-                    target_L = base_speed + (int16_t)yaw.Out;
-                    target_R = base_speed - (int16_t)yaw.Out;
+                    target_L = base_speed - (int16_t)yaw.Out;
+                    target_R = base_speed + (int16_t)yaw.Out;
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
@@ -360,8 +360,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // 2. 计算右轮速度环 PID
             speed_R.Target = target_R;
             PID_Update(&speed_R);
-            if(speed_L.Out>400)speed_L.Out=400;
-            if(speed_R.Out>400)speed_R.Out=400; 
+            if(speed_L.Out>900)speed_L.Out=900;
+            if(speed_L.Out<-900)speed_L.Out=-900;
+            if(speed_R.Out>900)speed_R.Out=900; 
+            if(speed_R.Out<-900)speed_R.Out=-900;
             // ==========================================================
             // 第三步：硬件输出 - 经过你封装接口发给 AT8236
             // ==========================================================
@@ -378,44 +380,46 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.1f; // 每次增减的步长
+    float step = 0.001f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
-        case 'a':  yaw.Kp += step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 'c':  yaw.Ki += step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 'e':  yaw.Kd += step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
-        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+        case 'a':  yaw.Kp += step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
+        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
+        case 'c':  yaw.Ki += step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
+        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
+        case 'e':  yaw.Kd += step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
+        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
 
         // ================= speed_L (左轮速度) =================
-        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
-        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
+        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
+        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
+        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
+        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
+        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
 
         // ================= speed_R (右轮速度) =================
-        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 'n': speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
-        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
+        case 'n': speed_R.Kp -= step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
+        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
+        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
+        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
+        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
 
         // ================= error (丢线直行同步) =================
-        case 's': error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 't': error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 'u': error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
+        case 's': error.Kp += step; printf("error Kp = %.3f\r\n", error.Kp); break;
+        case 't': error.Kp -= step; printf("error Kp = %.3f\r\n", error.Kp); break;
+        case 'u': error.Ki += step; printf("error Ki = %.3f\r\n", error.Ki); break;
+        case 'v': error.Ki -= step; printf("error Ki = %.3f\r\n", error.Ki); break;
+        case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
+        case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'y': 
-                  speed_L.Target=75;
-                  speed_R.Target=75;
+                  speed_L.Target=40;
+                  speed_R.Target=40;
                   error.cmd=1;
+                  yaw.ErrorInt=0;
+                  yaw.Error_last=0;
                   break;
         case 'z': 
                   error.cmd=0;
@@ -497,15 +501,15 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   //调用init函数
+  HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);// 开启 USART2 的接收中断，准备接收调参命令
   Motor_Init();
   // MPU6050_Init(); // IMU_init() internally calls MPU6050_Init()
   SR04_Init();
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
-  HAL_TIM_Base_Start_IT(&htim1);  // 开启 TIM1 的定时器中断
-  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);// 开启 USART2 的接收中断，准备接收调参命令
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  ESP8266_Init("F521F520","f521f520","192.168.100.18","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.16","8080");   //这是Xu的
   // Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
@@ -539,8 +543,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
-        HAL_Delay(1000);// 100ms周期打印一次
-        printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\r\n",
+    PERIODIC_START(Task_Vofa_Print, 100)
+        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d\r\n",
             error.Actual, error.Target, error.Out,
             yaw.Actual, yaw.Target, yaw.Out,
             speed_L.Actual, speed_L.Target, speed_L.Out,
@@ -548,7 +552,9 @@ int main(void)
             error.Kp, error.Ki, error.Kd,
             yaw.Kp, yaw.Ki, yaw.Kd,
             speed_L.Kp, speed_L.Ki, speed_L.Kd,
-            speed_R.Kp, speed_R.Ki, speed_R.Kd);
+            speed_R.Kp, speed_R.Ki, speed_R.Kd, 
+            track_error); // 注意这里的 track_error 对应的是 %d
+    PERIODIC_END
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
   }
