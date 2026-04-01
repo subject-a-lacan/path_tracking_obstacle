@@ -3,16 +3,16 @@
         {
             "name": "study_mpu6050_1_study_mpu6050_1",
             "includePath": [
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Core\\Inc",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Drivers\\STM32F1xx_HAL_Driver\\Inc",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Drivers\\STM32F1xx_HAL_Driver\\Inc\\Legacy",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Drivers\\CMSIS\\Device\\ST\\STM32F1xx\\Include",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Drivers\\CMSIS\\Include",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Core\\Inc",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Drivers\\STM32F1xx_HAL_Driver\\Inc",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Drivers\\STM32F1xx_HAL_Driver\\Inc\\Legacy",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Drivers\\CMSIS\\Device\\ST\\STM32F1xx\\Include",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Drivers\\CMSIS\\Include",
                 "C:\\Keil_v5\\ARM\\ARMCC\\include",
                 "C:\\Keil_v5\\ARM\\ARMCC\\include\\rw",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\MDK-ARM",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Core\\Src",
-                "d:\\KEIL_CUBE_VS\\study_mpu6050_1\\Drivers\\STM32F1xx_HAL_Driver\\Src",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\MDK-ARM",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Core\\Src",
+                "d:\\KEIL_CUBE_VS\\obstacl_track\\Drivers\\STM32F1xx_HAL_Driver\\Src",
                 "${default}"
             ],
             "defines": [

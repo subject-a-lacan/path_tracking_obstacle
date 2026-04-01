@@ -70,9 +70,9 @@ PID_t yaw={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.008f,
+    .Kp = 0.010f,
     .Ki = 0.0f,
-    .Kd = 0.005f,
+    .Kd = 0.003f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -80,6 +80,7 @@ PID_t yaw={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
+    .InteralCoef=0.00041f,
 };    
 /*
   定义PID结构体变量：左轮速度
@@ -101,7 +102,8 @@ PID_t speed_L={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-};  
+    .InteralCoef=0.0f,
+};    
 
 PID_t speed_R={
     .Target = 0,
@@ -117,6 +119,7 @@ PID_t speed_R={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
+    .InteralCoef=0.0f,
 };
 PID_t error={
     .Target = 0,
@@ -132,6 +135,7 @@ PID_t error={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=0,
+    .InteralCoef=0.0f,
 };   // 定义PID结构体变量：速度差
 
 // 定义小车运行状态的枚举类型
@@ -312,8 +316,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 case 0: // CAR_STATE_TRACKING (循迹模式)
                     // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
-                    base_speed = 40 - (4 * abs(track_error) / 1024);
-                    if (base_speed < 30) base_speed = 30; // 兜底最低速度
+                    base_speed = 20 - (4 * abs(track_error) / 1024);
+                    if (base_speed < 10) base_speed = 10; // 兜底最低速度
                     // // 2. 转向环 PID 计算
                     yaw.Target = 0;
                     yaw.Actual = track_error;
@@ -415,11 +419,15 @@ void UART_PID_Tune(uint8_t cmd)
         case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'y': 
-                  speed_L.Target=40;
-                  speed_R.Target=40;
+                  speed_L.Target=20;
+                  speed_R.Target=20;
                   error.cmd=1;
                   yaw.ErrorInt=0;
                   yaw.Error_last=0;
+                  speed_L.ErrorInt=0;
+                  speed_L.Error_last=0;
+                  speed_R.ErrorInt=0;
+                  speed_R.Error_last=0;
                   break;
         case 'z': 
                   error.cmd=0;
@@ -510,7 +518,7 @@ int main(void)
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
   ESP8266_Init("F521F520","f521f520","192.168.100.14","8080");   //这是Xu的
-  // Steer_SetAngle(90);
+  Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
   // Steer_Stop();
@@ -544,7 +552,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
     PERIODIC_START(Task_Vofa_Print, 100)
-        printf("%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%d\r\n",
+        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d\r\n",
             error.Actual, error.Target, error.Out,
             yaw.Actual, yaw.Target, yaw.Out,
             speed_L.Actual, speed_L.Target, speed_L.Out,
@@ -553,7 +561,7 @@ int main(void)
             yaw.Kp, yaw.Ki, yaw.Kd,
             speed_L.Kp, speed_L.Ki, speed_L.Kd,
             speed_R.Kp, speed_R.Ki, speed_R.Kd, 
-            track_error); // 注意这里的 track_error 对应的是 %d
+            track_error,yaw.ErrorInt); // 注意这里的 track_error 对应的是 %d
     PERIODIC_END
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
