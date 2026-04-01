@@ -509,7 +509,7 @@ int main(void)
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  ESP8266_Init("F521F520","f521f520","192.168.100.16","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.14","8080");   //这是Xu的
   // Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
