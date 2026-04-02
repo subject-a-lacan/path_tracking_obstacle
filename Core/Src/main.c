@@ -70,9 +70,9 @@ PID_t yaw={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.010f,
-    .Ki = 0.0f,
-    .Kd = 0.003f,
+    .Kp = 0.003f,
+    .Ki = 0.0002f,
+    .Kd = 0.01f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -384,7 +384,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.001f; // 每次增减的步长
+    float step = 0.00001f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
