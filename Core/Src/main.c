@@ -68,16 +68,18 @@ PID_t yaw={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
-    .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kp = 0.010f,
+    .Ki = 0.0f,
+    .Kd = 0.003f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
-};    
+    .cmd=1,
+    .InteralCoef=0.00041f,
+};
 /*
   定义PID结构体变量：左轮速度
   target:期望速度
@@ -90,14 +92,16 @@ PID_t speed_L={
     .Out = 0,
     .Kp = 7.6f,
     .Ki = 1.1f,
-    .Kd = 0.1f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
-};  
+    .cmd=1,
+    .InteralCoef=0.0f,
+};    
 
 PID_t speed_R={
     .Target = 0,
@@ -105,27 +109,31 @@ PID_t speed_R={
     .Out = 0,
     .Kp = 7.5f,
     .Ki = 1.0f,
-    .Kd = 0.1f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=1,
+    .InteralCoef=0.0f,
 };
 PID_t error={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 1.0f,
-    .Ki = 0.1f,
-    .Kd = 0.1f,
+    .Kp = 0.01f,
+    .Ki = 0.0f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
     .OutMax = 1000,
     .OutMin = -1000,
     .KdOut = 0,
+    .cmd=0,
+    .InteralCoef=0.0f,
 };   // 定义PID结构体变量：速度差
 
 // 定义小车运行状态的枚举类型
@@ -286,8 +294,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         static uint8_t pid_cnt = 0;
         pid_cnt++;
-        speed_L.Actual = Read_Encoder_Left();
-        speed_R.Actual = Read_Encoder_Right();
+        
         // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
         if (pid_cnt >= 20) 
         {
@@ -296,8 +303,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // 局部变量，存放算出来的“目标期望速度”
             int16_t target_L = 0; 
             int16_t target_R = 0;
-            int16_t base_speed = 300; // 基础直行期望速度，后续可调
-            
+            int16_t base_speed = 100; // 基础直行期望速度，后续可调
+             speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
+             speed_R.Actual = Read_Encoder_Right(); 
             // ==========================================================
             // 第一步：外环决策  - 根据状态计算目标速度
             // ==========================================================
@@ -305,23 +313,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 case 0: // CAR_STATE_TRACKING (循迹模式)
                     // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
-                    base_speed = 300 - (33 * abs(track_error) / 1024);
-                    if (base_speed < 100) base_speed = 100; // 兜底最低速度
-                    
-                    // 2. 转向环 PID 计算
+                    base_speed = 20 - (4 * abs(track_error) / 1024);
+                    if (base_speed < 10) base_speed = 10; // 兜底最低速度
+                    // // 2. 转向环 PID 计算
                     yaw.Target = 0;
                     yaw.Actual = track_error;
                     PID_Update(&yaw);
-                    
-                    // 3. 差速分配给左右轮目标速度
-                    target_L = base_speed + (int16_t)yaw.Out;
-                    target_R = base_speed - (int16_t)yaw.Out;
+                    // // 3. 差速分配给左右轮目标速度
+                    target_L = base_speed - (int16_t)yaw.Out;
+                    target_R = base_speed + (int16_t)yaw.Out;
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 同步环 PID 计算 (让左右轮速度差为 0)
-                    target_L = 75;
-                    target_R = 75;
+                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
+                    error.Target = 0;
+                    error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
+                    PID_Update(&error);
+                    // 2. 补偿分配给左右轮
+                    target_L = base_speed + (int16_t)error.Out;
+                    target_R = base_speed - (int16_t)error.Out;
                     break;
                     
 
@@ -334,7 +344,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     // 2. 正常执行避障非阻塞状态机
                     else {
                         // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
-                        if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
+                    if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
                             flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
                         }
                     }
@@ -347,22 +357,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             
             // 1. 计算左轮速度环 PID
             speed_L.Target = target_L;
-            speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
             PID_Update(&speed_L);
-            
             // 2. 计算右轮速度环 PID
             speed_R.Target = target_R;
-            speed_R.Actual = Read_Encoder_Right(); 
             PID_Update(&speed_R);
-            
+            if(speed_L.Out>900)speed_L.Out=900;
+            if(speed_L.Out<-900)speed_L.Out=-900;
+            if(speed_R.Out>900)speed_R.Out=900; 
+            if(speed_R.Out<-900)speed_R.Out=-900;
             // ==========================================================
             // 第三步：硬件输出 - 经过你封装接口发给 AT8236
             // ==========================================================
             // 因为写的是位置式 PID，算出来的 Out 直接就是 PWM 占空比
+            if(error.cmd==1){
             Motor_SetPWM((int16_t)speed_L.Out, (int16_t)speed_R.Out);
         }
+        else{
+          Motor_SetPWM(0, 0);
+        }
     }
-}
+}}
 // 串口调参执行函数
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
