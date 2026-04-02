@@ -376,43 +376,55 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.1f; // 每次增减的步长
-
+    float step = 0.001f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
-        case 'a':  yaw.Kp += step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.2f\r\n", yaw.Kp); break;
-        case 'c':  yaw.Ki += step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.2f\r\n", yaw.Ki); break;
-        case 'e':  yaw.Kd += step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
-        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.2f\r\n", yaw.Kd); break;
+        case 'a':  yaw.Kp += step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
+        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
+        case 'c':  yaw.Ki += step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
+        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
+        case 'e':  yaw.Kd += step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
+        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
 
         // ================= speed_L (左轮速度) =================
-        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.2f\r\n", speed_L.Kp); break;
-        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.2f\r\n", speed_L.Ki); break;
-        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
-        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.2f\r\n", speed_L.Kd); break;
+        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
+        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
+        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
+        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
+        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
+        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
 
         // ================= speed_R (右轮速度) =================
-        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 'n':   speed_R.Kp -= step; printf("speed_R Kp = %.2f\r\n", speed_R.Kp); break;
-        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.2f\r\n", speed_R.Ki); break;
-        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
-        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.2f\r\n", speed_R.Kd); break;
+        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
+        case 'n': speed_R.Kp -= step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
+        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
+        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
+        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
+        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
 
         // ================= error (丢线直行同步) =================
-        case 's': error.Kp += step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 't': error.Kp -= step; printf("error Kp = %.2f\r\n", error.Kp); break;
-        case 'u': error.Ki += step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 'v': error.Ki -= step; printf("error Ki = %.2f\r\n", error.Ki); break;
-        case 'w': error.Kd += step; printf("error Kd = %.2f\r\n", error.Kd); break;
-        case 'x': error.Kd -= step; printf("error Kd = %.2f\r\n", error.Kd); break;
-
-        default: break; 
+        case 's': error.Kp += step; printf("error Kp = %.3f\r\n", error.Kp); break;
+        case 't': error.Kp -= step; printf("error Kp = %.3f\r\n", error.Kp); break;
+        case 'u': error.Ki += step; printf("error Ki = %.3f\r\n", error.Ki); break;
+        case 'v': error.Ki -= step; printf("error Ki = %.3f\r\n", error.Ki); break;
+        case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
+        case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
+        case 'y': 
+                  speed_L.Target=20;
+                  speed_R.Target=20;
+                  error.cmd=1;
+                  yaw.ErrorInt=0;
+                  yaw.Error_last=0;
+                  speed_L.ErrorInt=0;
+                  speed_L.Error_last=0;
+                  speed_R.ErrorInt=0;
+                  speed_R.Error_last=0;
+                  break;
+        case 'z': 
+                  error.cmd=0;
+                  break;
+        default: break; // 其他不理会
     }
 }
 //回调函数
