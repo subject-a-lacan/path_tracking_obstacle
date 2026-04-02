@@ -325,13 +325,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    error.Target = 0;
-                    error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
-                    PID_Update(&error);
-                    // 2. 补偿分配给左右轮
-                    target_L = base_speed + (int16_t)error.Out;
-                    target_R = base_speed - (int16_t)error.Out;
+                    target_L = 20;
+                    target_R = 20;
                     break;
                     
 
