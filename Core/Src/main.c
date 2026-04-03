@@ -92,8 +92,8 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 7.6f,
-    .Ki = 1.1f,
+    .Kp = 20.0f,
+    .Ki = 0.01f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -102,15 +102,15 @@ PID_t speed_L={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-    .InteralCoef=0.0f,
+    .InteralCoef=0.2f,
 };    
 
 PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 7.5f,
-    .Ki = 1.0f,
+    .Kp = 20.0f,
+    .Ki = 0.01f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -119,7 +119,7 @@ PID_t speed_R={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-    .InteralCoef=0.0f,
+    .InteralCoef=0.2f,
 };
 PID_t error={
     .Target = 0,
@@ -379,7 +379,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.1f; // 每次增减的步长
+    float step = 0.001f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
