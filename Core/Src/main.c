@@ -92,9 +92,9 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 20.0f,
-    .Ki = 0.01f,
-    .Kd = 0.0f,
+    .Kp = 33.0f,
+    .Ki = 0.13f,
+    .Kd = 0.06f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -102,16 +102,16 @@ PID_t speed_L={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-    .InteralCoef=0.2f,
+    .InteralCoef=0.0f,
 };    
 
 PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 20.0f,
-    .Ki = 0.01f,
-    .Kd = 0.0f,
+    .Kp = 33.0f,
+    .Ki = 0.13f,
+    .Kd = 0.06f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -119,7 +119,7 @@ PID_t speed_R={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-    .InteralCoef=0.2f,
+    .InteralCoef=0.0f,
 };
 PID_t error={
     .Target = 0,
@@ -299,7 +299,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         pid_cnt++;
         
         // 软件分频：满 20 次即为 20ms 的绝对稳定控制周期
-        if (pid_cnt >= 20) 
+        if (pid_cnt >= 10) 
         {
             pid_cnt = 0;
             
@@ -374,12 +374,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
           Motor_SetPWM(0, 0);
         }
     }
-}}
+}
+
+}
 // 串口调参执行函数
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
+int16_t speed=10;
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.001f; // 每次增减的步长
+    float step = 0.01f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
@@ -414,8 +417,8 @@ void UART_PID_Tune(uint8_t cmd)
         case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'y': 
-                  speed_L.Target=28;
-                  speed_R.Target=28;
+                  // speed_L.Target=28;
+                  // speed_R.Target=28;
                   error.cmd=1;
                   yaw.ErrorInt=0;
                   yaw.Error_last=0;
@@ -423,6 +426,8 @@ void UART_PID_Tune(uint8_t cmd)
                   speed_L.Error_last=0;
                   speed_R.ErrorInt=0;
                   speed_R.Error_last=0;
+                  speed_L.Target=28;
+                  speed_R.Target=28;
                   break;
         case 'z': 
                   error.cmd=0;

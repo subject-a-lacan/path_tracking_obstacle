@@ -1,4 +1,4 @@
-#include "pid.h"
+ #include "pid.h"
 #include "math.h"
 #define filter 0.1	//微分滤波系数，取值范围为0~1，值越大微分滤波效果越明显，但响应速度越慢
 /**
@@ -11,14 +11,20 @@ void PID_Update(PID_t *p)
 	/*获取本次误差和上次误差*/
 	p->Error_last = p->Error_now;					//获取上次误差
 	p->Error_now = p->Target - p->Actual;		//获取本次误差，目标值减实际值，即为误差值
-	
+	/*变速积分*/
+	float k= 1/(1 + p->InteralCoef * fabs(p->Error_now));	//计算变速积分系数，误差越大，积分系数越大，积分作用越明显
+	/*积分分离*/
+	if (fabs(p->Error_now) <= 15.0f) 
+        {
+		    p->ErrorInt += p->Error_now;	
+        }
 	/*外环误差积分（累加）*/
 	/*如果Ki不为0，才进行误差积分，这样做的目的是便于调试*/
 	/*因为在调试时，我们可能先把Ki设置为0，这时积分项无作用，误差消除不了，误差积分会积累到很大的值*/
 	/*后续一旦Ki不为0，那么因为误差积分已经积累到很大的值了，这就导致积分项疯狂输出，不利于调试*/
 	if (p->Ki != 0)					//如果Ki不为0
 	{
-		p->ErrorInt += p->Error_now;	//进行误差积分
+		p->ErrorInt += (p->Error_now)*k;	//进行误差积分
         /*积分限幅*/
 	    if (p->ErrorInt > (1000/p->Ki)) {p->ErrorInt = 1000/p->Ki;}		//限制误差积分最大为1000/Ki
 	    if (p->ErrorInt < -(1000/p->Ki)) {p->ErrorInt = -(1000/p->Ki);}		//限制误差积分最小为-1000/Ki
@@ -30,12 +36,10 @@ void PID_Update(PID_t *p)
     /*不完全微分*/
     float Kdout_now=(1-filter)*p->Kd*(p->Error_now - p->Error_last) + filter*p->KdOut;	//计算本次微分项输出，使用一阶低通滤波对微分项进行滤波
     p->KdOut = Kdout_now;
-	/*变速积分*/
-	float k= 1/(1 + p->InteralCoef * fabs(p->Error_now));	//计算变速积分系数，误差越大，积分系数越大，积分作用越明显
 	/*PID计算*/
 	/*使用位置式PID公式，计算得到输出值*/
 	p->Out = p->Kp * p->Error_now
-		   + p->Ki * p->ErrorInt*k
+		   + p->Ki * p->ErrorInt
 		   + p->KdOut;
 	
 	/*输出限幅*/
