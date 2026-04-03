@@ -70,9 +70,9 @@ PID_t yaw={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.003f,
-    .Ki = 0.0002f,
-    .Kd = 0.01f,
+    .Kp = 0.0f,
+    .Ki = 0.0f,
+    .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -80,7 +80,7 @@ PID_t yaw={
     .OutMin = -1000,
     .KdOut = 0,
     .cmd=1,
-    .InteralCoef=0.00041f,
+    .InteralCoef=0.0f,
 };    
 /*
   定义PID结构体变量：左轮速度
@@ -92,8 +92,8 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 7.6f,
-    .Ki = 1.1f,
+    .Kp = 0.1f,
+    .Ki = 0.0f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -109,8 +109,8 @@ PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 7.5f,
-    .Ki = 1.0f,
+    .Kp = 0.1f,
+    .Ki = 0.0f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -125,7 +125,7 @@ PID_t error={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.01f,
+    .Kp = 0.0f,
     .Ki = 0.0f,
     .Kd = 0.0f,
     .Error_now = 0,
@@ -316,25 +316,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 case 0: // CAR_STATE_TRACKING (循迹模式)
                     // 1. 动态降速：误差越大，基础速度越慢 (安全过弯)
-                    base_speed = 20 - (4 * abs(track_error) / 1024);
-                    if (base_speed < 10) base_speed = 10; // 兜底最低速度
-                    // // 2. 转向环 PID 计算
-                    yaw.Target = 0;
-                    yaw.Actual = track_error;
-                    PID_Update(&yaw);
-                    // // 3. 差速分配给左右轮目标速度
-                    target_L = base_speed - (int16_t)yaw.Out;
-                    target_R = base_speed + (int16_t)yaw.Out;
+                    // base_speed = 20 - (4 * abs(track_error) / 1024);
+                    // if (base_speed < 10) base_speed = 10; // 兜底最低速度
+                    // // // 2. 转向环 PID 计算
+                    // yaw.Target = 0;
+                    // yaw.Actual = track_error;
+                    // PID_Update(&yaw);
+                    // // // 3. 差速分配给左右轮目标速度
+                    // target_L = base_speed - (int16_t)yaw.Out;
+                    // target_R = base_speed + (int16_t)yaw.Out;
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    // error.Target = 0;
-                    // error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
-                    // PID_Update(&error);
-                    // // 2. 补偿分配给左右轮
-                    // target_L = base_speed + (int16_t)error.Out;
-                    // target_R = base_speed - (int16_t)error.Out;
+                    target_L=28;
+                    target_R=28;
                     break;
                     
 
@@ -384,7 +379,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 // 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
 void UART_PID_Tune(uint8_t cmd) 
 {
-    float step = 0.00001f; // 每次增减的步长
+    float step = 0.1f; // 每次增减的步长
     switch(cmd) 
     {
         // ================= yaw (循迹转向) =================
@@ -419,8 +414,8 @@ void UART_PID_Tune(uint8_t cmd)
         case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
         case 'y': 
-                  speed_L.Target=20;
-                  speed_R.Target=20;
+                  speed_L.Target=28;
+                  speed_R.Target=28;
                   error.cmd=1;
                   yaw.ErrorInt=0;
                   yaw.Error_last=0;
