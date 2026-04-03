@@ -92,8 +92,8 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.1f,
-    .Ki = 0.0f,
+    .Kp = 7.6f,
+    .Ki = 1.1f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -109,8 +109,8 @@ PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 0.1f,
-    .Ki = 0.0f,
+    .Kp = 7.5f,
+    .Ki = 1.0f,
     .Kd = 0.0f,
     .Error_now = 0,
     .Error_last = 0,
@@ -546,7 +546,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
-    PERIODIC_START(Task_Vofa_Print, 50)
+    PERIODIC_START(Task_Vofa_Print, 10)
         printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d\r\n",
             error.Actual, error.Target, error.Out,
             yaw.Actual, yaw.Target, yaw.Out,
