@@ -92,9 +92,9 @@ PID_t speed_L={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 33.0f,
+    .Kp = 35.0f,
     .Ki = 0.13f,
-    .Kd = 0.06f,
+    .Kd = 0.18f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -109,9 +109,9 @@ PID_t speed_R={
     .Target = 0,
     .Actual = 0,
     .Out = 0,
-    .Kp = 33.0f,
+    .Kp = 35.0f,
     .Ki = 0.13f,
-    .Kd = 0.06f,
+    .Kd = 0.18f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -517,7 +517,7 @@ int main(void)
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  ESP8266_Init("F521F520","f521f520","192.168.100.27","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.19","8080");   //这是Xu的
   Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
