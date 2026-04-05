@@ -188,116 +188,116 @@ int fputc(int ch, FILE *f)
     HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1,HAL_MAX_DELAY);
     return ch;
 }
-// void StateMachine_Update(void) 
-// {   
-//     PERIODIC(15); // 15ms周期调用一次状态机更新函数
-//     // 定义静态防抖计数器，函数退出后值不会消失
-//     static uint8_t lost_line_cnt = 0;
-//     static uint8_t find_line_cnt = 0;
-//     static uint8_t obstacle_cnt = 0;
+void StateMachine_Update(void) 
+{   
+    PERIODIC(15); // 15ms周期调用一次状态机更新函数
+    // 定义静态防抖计数器，函数退出后值不会消失
+    static uint8_t lost_line_cnt = 0;
+    static uint8_t find_line_cnt = 0;
+    static uint8_t obstacle_cnt = 0;
     
 
-//     switch (car_state) 
-//     {
-//         // ==========================================
-//         // 状态 1：正常循迹
-//         // ==========================================
-//         case CAR_STATE_TRACKING:
-//             优先级最高：判断是否需要避障 (小于20cm)
-//             if (front_distance < 20) {
-//                 if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
-//                     car_state = CAR_STATE_OBSTACLE_AVOID; 
+    switch (car_state) 
+    {
+        // ==========================================
+        // 状态 1：正常循迹
+        // ==========================================
+        case CAR_STATE_TRACKING:
+            // 优先级最高：判断是否需要避障 (小于20cm)
+            // if (front_distance < 20) {
+            //     if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
+            //         car_state = CAR_STATE_OBSTACLE_AVOID; 
                     
-//                     // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
-//                     flag_avoid_reset = 1; 
+            //         // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
+            //         flag_avoid_reset = 1; 
                     
-//                     obstacle_cnt = 0;      
-//                 }
-//             } 
-//             else {
-//                 obstacle_cnt = 0; 
+            //         obstacle_cnt = 0;      
+            //     }
+            // } 
+            // else {
+                obstacle_cnt = 0; 
                 
-//                 // 次优先级：判断是否丢线 (0xFF代表8个灯全白)
-//                 if (sensor.Digtal == 0xFF) { 
-//                     if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
-//                         car_state = CAR_STATE_LOST_LINE_GO; 
+                // 次优先级：判断是否丢线 (0xFF代表8个灯全白)
+                if (sensor.Digtal == 0xFF) { 
+                    if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
+                        car_state = CAR_STATE_LOST_LINE_GO; 
                         
-//                         // 清零直行同步环的历史误差，防止切入直行瞬间抽搐
-//                         error.ErrorInt = 0;
-//                         error.Error_last = 0;
-//                         error.KdOut = 0;
-                        
-//                         lost_line_cnt = 0;
-//                     }
-//                 } else {
-//                     lost_line_cnt = 0; 
-//                 }
-//             }
-//             break;
+                        // 清零直行同步环的历史误差，防止切入直行瞬间抽搐
+                        speed_L.ErrorInt = 0;
+                        speed_L.Error_last = 0;
+                        speed_R.ErrorInt = 0;
+                        speed_R.Error_last = 0;
+                        lost_line_cnt = 0;
+                    }
+                } else {
+                    lost_line_cnt = 0; 
+                }
+            // }
+            break;
 
-//         // ==========================================
-//         // 状态 2：丢线直行 (通过双轮编码器同步 PID 保持直走)
-//         // ==========================================
-//         case CAR_STATE_LOST_LINE_GO:
-//             // 防撞！
-//             if (front_distance < 20) {
-//                 if (++obstacle_cnt > 4) {
-//                     car_state = CAR_STATE_OBSTACLE_AVOID;
+        // ==========================================
+        // 状态 2：丢线直行 (通过双轮编码器同步 PID 保持直走)
+        // ==========================================
+        case CAR_STATE_LOST_LINE_GO:
+            // 防撞！
+            // if (front_distance < 20) {
+            //     if (++obstacle_cnt > 4) {
+            //         car_state = CAR_STATE_OBSTACLE_AVOID;
                     
-//                     // 同样需要通知中断层复位避障动作
-//                     flag_avoid_reset = 1; 
+            //         // 同样需要通知中断层复位避障动作
+            //         flag_avoid_reset = 1; 
                     
-//                     obstacle_cnt = 0;
-//                 }
-//             } 
-//             else {
-//                 obstacle_cnt = 0;
+            //         obstacle_cnt = 0;
+            //     }
+            // } 
+            // else {
+            //     obstacle_cnt = 0;
                 
-//                 // 判断是否重新踩到了黑线
-//                 if (sensor.Digtal != 0xFF) { // 只要不是全白
-//                     if (++find_line_cnt > 4) { // 连续确认4次，防抖
-//                         car_state = CAR_STATE_TRACKING; // 成功找回黑线，切回循迹
+                // 判断是否重新踩到了黑线
+                if (sensor.Digtal != 0xFF) { // 只要不是全白
+                    if (++find_line_cnt > 4) { // 连续确认4次，防抖
+                        car_state = CAR_STATE_TRACKING; // 成功找回黑线，切回循迹
                         
-//                         // 为接下来的循迹转向环清除数据
-//                         yaw.ErrorInt = 0;
-//                         yaw.Error_last = 0;
-//                         yaw.KdOut = 0;
-//                         speed_L.ErrorInt = 0;
-//                         speed_L.Error_last = 0; 
-//                         speed_L.KdOut = 0;
-//                         speed_R.ErrorInt = 0; 
-//                         speed_R.Error_last = 0;
-//                         speed_R.KdOut = 0;
-//                         find_line_cnt = 0;
-//                     }
-//                 } else {
-//                     find_line_cnt = 0;
-//                 }
-//             }
-//             break;
+                        // 为接下来的循迹转向环清除数据
+                        yaw.ErrorInt = 0;
+                        yaw.Error_last = 0;
+                        yaw.KdOut = 0;
+                        speed_L.ErrorInt = 0;
+                        speed_L.Error_last = 0; 
+                        speed_L.KdOut = 0;
+                        speed_R.ErrorInt = 0; 
+                        speed_R.Error_last = 0;
+                        speed_R.KdOut = 0;
+                        find_line_cnt = 0;
+                    }
+                } else {
+                    find_line_cnt = 0;
+                }
+            // }
+            break;
 
-//         // ==========================================
-//         // 状态 3：避障模式
-//         // ==========================================
-//         case CAR_STATE_OBSTACLE_AVOID:
-//             // 此时底层定时器中断正在高频调用 Avoidance_Run 控制电机
+        // ==========================================
+        // 状态 3：避障模式
+        // ==========================================
+        case CAR_STATE_OBSTACLE_AVOID:
+            // 此时底层定时器中断正在高频调用 Avoidance_Run 控制电机
             
-//             if (flag_avoid_done == 1) { 
+            // if (flag_avoid_done == 1) { 
                 
-//                 // 避障彻底完成，严格按照逻辑直接切回循迹状态！
-//                 car_state = CAR_STATE_TRACKING; 
+            //     // 避障彻底完成，严格按照逻辑直接切回循迹状态！
+            //     car_state = CAR_STATE_TRACKING; 
                 
-//                 // 避障刚结束车身大概率有偏角，必须清零转向 PID 重新平滑切入赛道
-//                 yaw.ErrorInt = 0;
-//                 yaw.Error_last = 0;
-//                 yaw.KdOut = 0;
+            //     // 避障刚结束车身大概率有偏角，必须清零转向 PID 重新平滑切入赛道
+            //     yaw.ErrorInt = 0;
+            //     yaw.Error_last = 0;
+            //     yaw.KdOut = 0;
                 
-//                 // 收起捷报，清空信箱，为下一次避障做准备
-//                 flag_avoid_done = 0; 
-//             }
-//             break;
-//     }
-// }
+            //     // 收起捷报，清空信箱，为下一次避障做准备
+            //     flag_avoid_done = 0; 
+            // }
+            break;
+    }
+}
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) 
 {
     if (htim->Instance == TIM1) 
