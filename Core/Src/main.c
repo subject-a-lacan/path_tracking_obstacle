@@ -72,8 +72,8 @@ PID_t yaw={
     .Actual = 0,
     .Out = 0,
     .Kp = 0.003f,
-    .Ki = 0.0f,
-    .Kd = 0.0f,
+    .Ki = 0.00004f,
+    .Kd = 0.005f,
     .Error_now = 0,
     .Error_last = 0,
     .ErrorInt = 0,
@@ -82,6 +82,7 @@ PID_t yaw={
     .KdOut = 0,
     .cmd=1,
     .InteralCoef=0.00041f,
+    .difffilter=0.4f,
 };    
 /*
   定义PID结构体变量：左轮速度
@@ -104,6 +105,7 @@ PID_t speed_L={
     .KdOut = 0,
     .cmd=1,
     .InteralCoef=0.0f,
+    .difffilter=0.1f,
 };    
 
 PID_t speed_R={
@@ -121,6 +123,7 @@ PID_t speed_R={
     .KdOut = 0,
     .cmd=1,
     .InteralCoef=0.0f,
+    .difffilter=0.1f,
 };
 PID_t error={
     .Target = 0,

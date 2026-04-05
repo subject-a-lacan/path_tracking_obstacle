@@ -1,6 +1,5 @@
 #include "pid.h"
 #include "math.h"
-#define filter 0.1	//微分滤波系数，取值范围为0~1，值越大微分滤波效果越明显，但响应速度越慢
 /**
   * 函    数：PID计算及结构体变量值更新
   * 参    数：PID_t * 指定结构体的地址
@@ -28,7 +27,7 @@ void PID_Update(PID_t *p)
 		p->ErrorInt = 0;			//误差积分直接归0
 	}
     /*不完全微分*/
-    float Kdout_now=(1-filter)*p->Kd*(p->Error_now - p->Error_last) + filter*p->KdOut;	//计算本次微分项输出，使用一阶低通滤波对微分项进行滤波
+    float Kdout_now=(1-p->difffilter)*p->Kd*(p->Error_now - p->Error_last) + (p->difffilter)*p->KdOut;	//计算本次微分项输出，使用一阶低通滤波对微分项进行滤波
     p->KdOut = Kdout_now;
 	/*变速积分*/
 	float k= 1/(1 + p->InteralCoef * fabs(p->Error_now));	//计算变速积分系数，误差越大，积分系数越大，积分作用越明显

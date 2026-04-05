@@ -22,6 +22,7 @@ typedef struct {
     float KdOut;	//不完全微分
 	volatile uint16_t cmd;
 	float InteralCoef;	//变速积分系数
+	float difffilter;//微分项滤波系数
 } PID_t;
 void PID_Update(PID_t *p);
 #endif // PID_H
