@@ -23,6 +23,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdlib.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -164,8 +165,11 @@ unsigned char Digtal;							 // 数字量
 volatile uint8_t flag_avoid_done = 0;  // 接收中断避障完成的信息
 volatile uint8_t flag_avoid_reset = 0; // 发送给中断的命令：复位避障步骤
 
-uint8_t rx_byte = 0;    // 缓存命令
-uint8_t rx_state = 0;   // 接收状态机：0代表等帧头，1代表等指令
+uint8_t rx_byte = 0;    // 缓存当前接收字节
+uint8_t rx_cmd = 0;     // 暂存指令字符
+uint8_t rx_state = 0;   // 0:等C, 1:等指令, 2:等数值
+char rx_buf[20];        // 暂存数值字符串
+uint8_t rx_index = 0;   // 缓冲区索引
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -381,56 +385,41 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 }}
 // 串口调参执行函数
-// 传入参数 cmd: 串口接收到的 1~24 的数字 (以十六进制/HEX格式发送)
-void UART_PID_Tune(uint8_t cmd) 
+// 传入参数 cmd: 指令字符; val: 需要设置的数值
+void UART_PID_Tune(uint8_t cmd, float val) 
 {
-    float step = 0.00001f; // 每次增减的步长
     switch(cmd) 
     {
-        // ================= yaw (循迹转向) =================
-        case 'a':  yaw.Kp += step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
-        case 'b':  yaw.Kp -= step; printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
-        case 'c':  yaw.Ki += step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
-        case 'd':  yaw.Ki -= step; printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
-        case 'e':  yaw.Kd += step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
-        case 'f':  yaw.Kd -= step; printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
+        // ================= PID 参数设置 (数值生效) =================
+        case 'a': yaw.Kp = val;     printf("yaw Kp = %.3f\r\n", yaw.Kp); break;
+        case 'c': yaw.Ki = val;     printf("yaw Ki = %.3f\r\n", yaw.Ki); break;
+        case 'e': yaw.Kd = val;     printf("yaw Kd = %.3f\r\n", yaw.Kd); break;
 
-        // ================= speed_L (左轮速度) =================
-        case 'g':  speed_L.Kp += step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
-        case 'h':  speed_L.Kp -= step; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
-        case 'i':  speed_L.Ki += step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
-        case 'j':  speed_L.Ki -= step; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
-        case 'k':  speed_L.Kd += step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
-        case 'l':  speed_L.Kd -= step; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
+        case 'g': speed_L.Kp = val; printf("speed_L Kp = %.3f\r\n", speed_L.Kp); break;
+        case 'i': speed_L.Ki = val; printf("speed_L Ki = %.3f\r\n", speed_L.Ki); break;
+        case 'k': speed_L.Kd = val; printf("speed_L Kd = %.3f\r\n", speed_L.Kd); break;
 
-        // ================= speed_R (右轮速度) =================
-        case 'm': speed_R.Kp += step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
-        case 'n': speed_R.Kp -= step; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
-        case 'o': speed_R.Ki += step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
-        case 'p': speed_R.Ki -= step; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
-        case 'q': speed_R.Kd += step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
-        case 'r': speed_R.Kd -= step; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
+        case 'm': speed_R.Kp = val; printf("speed_R Kp = %.3f\r\n", speed_R.Kp); break;
+        case 'o': speed_R.Ki = val; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
+        case 'q': speed_R.Kd = val; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
 
-        // ================= error (丢线直行同步) =================
-        case 's': error.Kp += step; printf("error Kp = %.3f\r\n", error.Kp); break;
-        case 't': error.Kp -= step; printf("error Kp = %.3f\r\n", error.Kp); break;
-        case 'u': error.Ki += step; printf("error Ki = %.3f\r\n", error.Ki); break;
-        case 'v': error.Ki -= step; printf("error Ki = %.3f\r\n", error.Ki); break;
-        case 'w': error.Kd += step; printf("error Kd = %.3f\r\n", error.Kd); break;
-        case 'x': error.Kd -= step; printf("error Kd = %.3f\r\n", error.Kd); break;
+        case 's': error.Kp = val;   printf("error Kp = %.3f\r\n", error.Kp); break;
+        case 'u': error.Ki = val;   printf("error Ki = %.3f\r\n", error.Ki); break;
+        case 'w': error.Kd = val;   printf("error Kd = %.3f\r\n", error.Kd); break;
+
+        // ================= 控制指令 (固定动作) =================
         case 'y': 
-                  speed_L.Target=20;
-                  speed_R.Target=20;
-                  error.cmd=1;
-                  yaw.ErrorInt=0;
-                  yaw.Error_last=0;
-                  speed_L.ErrorInt=0;
-                  speed_L.Error_last=0;
-                  speed_R.ErrorInt=0;
-                  speed_R.Error_last=0;
+                  speed_L.Target = 20; speed_R.Target = 20;
+                  error.cmd = 1;
+                  // 清除积分/误差
+                  yaw.ErrorInt = 0; yaw.Error_last = 0;
+                  speed_L.ErrorInt = 0; speed_L.Error_last = 0;
+                  speed_R.ErrorInt = 0; speed_R.Error_last = 0;
+                  printf("START (Speed 20)\r\n");
                   break;
         case 'z': 
-                  error.cmd=0;
+                  error.cmd = 0;
+                  printf("STOP\r\n");
                   break;
         default: break; // 其他不理会
     }
@@ -442,16 +431,30 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     {
         switch (rx_state) 
         {
-            case 0: // 【状态0：等帧头】
-                if (rx_byte == 'C') { // 假设帧头是字符大写的 'C'
-                    rx_state = 1;     // 收到帧头了！状态机切到状态1
+            case 0: // 【状态0：等帧头 'C'】
+                if (rx_byte == 'C') {
+                    rx_state = 1;
                 }
-                // 如果收到的不是 'C'，状态机还是 0，这个错误字节直接被无视
                 break;
                 
-            case 1: // 【状态1：接收指令并执行】
-                UART_PID_Tune(rx_byte); // 把收到的 1~24 的数字丢进去执行
-                rx_state = 0;           // 极其关键：执行完立刻复位，重新等下一个 'C'
+            case 1: // 【状态1：存指令字符】
+                rx_cmd = rx_byte;
+                rx_index = 0;
+                rx_state = 2;
+                break;
+
+            case 2: // 【状态2：存数值，直到换行】
+                if (rx_byte == '\r' || rx_byte == '\n') {
+                    rx_buf[rx_index] = '\0'; // 字符串结束符
+                    // 执行调参逻辑
+                    UART_PID_Tune(rx_cmd, atof(rx_buf));
+                    rx_state = 0; // 回到初始状态，等待下一个 'C'
+                } else {
+                    // 只要不是换行符，且缓冲区没满，就存入 rx_buf
+                    if (rx_index < sizeof(rx_buf) - 1) {
+                        rx_buf[rx_index++] = rx_byte;
+                    }
+                }
                 break;
         }
         
@@ -516,8 +519,8 @@ int main(void)
   SR04_Init();
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
-  // ESP8266_Init("F521F520","f521f520","192.168.100.15","8080");   //这是Gong的
-  ESP8266_Init("F521F520","f521f520","192.168.100.27","8080");   //这是Xu的
+  ESP8266_Init("F521F520","f521f520","192.168.100.22","8080");   //这是Gong的
+  // ESP8266_Init("F521F520","f521f520","192.168.100.27","8080");   //这是Xu的
   Steer_SetAngle(90);
   // IMU_init();         
   // HAL_Delay(10);
