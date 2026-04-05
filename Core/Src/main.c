@@ -221,13 +221,6 @@ void StateMachine_Update(void)
                 if (sensor.Digtal == 0xFF) { 
                     if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
                         car_state = CAR_STATE_LOST_LINE_GO; 
-                        
-                        // 清零直行同步环的历史误差，防止切入直行瞬间抽搐
-                        speed_L.ErrorInt = 0;
-                        speed_L.Error_last = 0;
-                        speed_R.ErrorInt = 0;
-                        speed_R.Error_last = 0;
-                        lost_line_cnt = 0;
                     }
                 } else {
                     lost_line_cnt = 0; 
@@ -260,14 +253,8 @@ void StateMachine_Update(void)
                         
                         // 为接下来的循迹转向环清除数据
                         yaw.ErrorInt = 0;
-                        yaw.Error_last = 0;
+                        yaw.Error_last = yaw.Error_now;
                         yaw.KdOut = 0;
-                        speed_L.ErrorInt = 0;
-                        speed_L.Error_last = 0; 
-                        speed_L.KdOut = 0;
-                        speed_R.ErrorInt = 0; 
-                        speed_R.Error_last = 0;
-                        speed_R.KdOut = 0;
                         find_line_cnt = 0;
                     }
                 } else {
@@ -557,7 +544,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
     PERIODIC_START(Task_Vofa_Print, 50)
-        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d\r\n",
+        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d,%.4f\r\n",
             error.Actual, error.Target, error.Out,
             yaw.Actual, yaw.Target, yaw.Out,
             speed_L.Actual, speed_L.Target, speed_L.Out,
@@ -566,7 +553,8 @@ int main(void)
             yaw.Kp, yaw.Ki, yaw.Kd,
             speed_L.Kp, speed_L.Ki, speed_L.Kd,
             speed_R.Kp, speed_R.Ki, speed_R.Kd, 
-            track_error,yaw.ErrorInt); // 注意这里的 track_error 对应的是 %d
+            track_error,(int)yaw.ErrorInt,
+            (float)(((Digtal>>7)&1)*1000 + ((Digtal>>6)&1)*100 + ((Digtal>>5)&1)*10 + ((Digtal>>4)&1) + ((Digtal>>3)&1)*0.1f + ((Digtal>>2)&1)*0.01f + ((Digtal>>1)&1)*0.001f + (Digtal&1)*0.0001f)); 
     PERIODIC_END
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
