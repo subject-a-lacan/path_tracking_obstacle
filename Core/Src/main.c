@@ -143,7 +143,7 @@ PID_t pid_pianhang={
     .Target=0,
     .Actual=0,
     .Out=0,
-    .Kp=0.01f,
+    .Kp=1.0f,
     .Ki=0.0f,
     .Kd=0.0f,
     .Error_now=0,
@@ -342,8 +342,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    target_L = base_speed;
-                    target_R = base_speed;
+                pid_pianhang.Actual = pianhang;
+                PID_Update(&pid_pianhang);
+                target_L = base_speed + (int16_t)pid_pianhang.Out; 
+                target_R = base_speed - (int16_t)pid_pianhang.Out;
                     break;
                     
 
@@ -408,9 +410,11 @@ void UART_PID_Tune(uint8_t cmd, float val)
         case 'o': speed_R.Ki = val; printf("speed_R Ki = %.3f\r\n", speed_R.Ki); break;
         case 'q': speed_R.Kd = val; printf("speed_R Kd = %.3f\r\n", speed_R.Kd); break;
 
-        case 's': error.Kp = val;   printf("error Kp = %.3f\r\n", error.Kp); break;
-        case 'u': error.Ki = val;   printf("error Ki = %.3f\r\n", error.Ki); break;
-        case 'w': error.Kd = val;   printf("error Kd = %.3f\r\n", error.Kd); break;
+        case 's': pid_pianhang.Kp = val;   printf("pid_pianhang Kp = %.3f\r\n", pid_pianhang.Kp); break;
+        case 'u': pid_pianhang.Ki = val;   printf("pid_pianhang Ki = %.3f\r\n", pid_pianhang.Ki); break;
+        case 'w': pid_pianhang.Kd = val;   printf("pid_pianhang Kd = %.3f\r\n", pid_pianhang.Kd); break;
+
+        
 
         // ================= 控制指令 (固定动作) =================
         case 'y': 
