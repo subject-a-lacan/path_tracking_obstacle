@@ -21,6 +21,7 @@ void IMU_getValues(float * values);
 void IMU_AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 void IMU_getQ(float * q);
 void IMU_getYawPitchRoll(float * angles);
+void MPU_Proc(volatile float* pianhang);
 void calGyroVariance(float data[], int length, float sqrResult[], float avgResult[]);
 void IMU_TT_getgyro(float * zsjganda);
 float invSqrt1(float x);

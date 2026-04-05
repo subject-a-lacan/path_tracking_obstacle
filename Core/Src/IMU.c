@@ -351,9 +351,13 @@ void IMU_TT_getgyro(float * zsjganda)
 	zsjganda[0] = TTangles_gyro[0];
     zsjganda[1] = TTangles_gyro[1];
     zsjganda[2] = TTangles_gyro[2];
-	zsjganda[3] = TTangles_gyro[3];
-	zsjganda[4] = TTangles_gyro[4];
-	zsjganda[5] = TTangles_gyro[5];
-	zsjganda[6] = TTangles_gyro[6];
+	zsjganda[3] = TTangles_gyro[3];}
+#include "task.h"
+void MPU_Proc(volatile float* pianhang)
+{
+    PERIODIC(10); // 10ms采样周期
+    float angles[3];
+    IMU_getYawPitchRoll(angles);
+    *pianhang = angles[0]; // 更新偏航角
 }
 

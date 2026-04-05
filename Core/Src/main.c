@@ -24,11 +24,9 @@
 #include "usart.h"
 #include "gpio.h"
 #include <stdlib.h>
-
+#include <mpu6050.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "mpu6050.h"
-#include "mpu6050_test.h"
 #include "stdio.h"
 #include "lora.h"
 #include "buzzler.h"
@@ -141,7 +139,23 @@ PID_t error={
     .cmd=0,
     .InteralCoef=0.0f,
 };   // 定义PID结构体变量：速度差
-
+PID_t pid_pianhang={
+    .Target=0,
+    .Actual=0,
+    .Out=0,
+    .Kp=0.01f,
+    .Ki=0.0f,
+    .Kd=0.0f,
+    .Error_now=0,
+    .Error_last=0,
+    .ErrorInt=0,
+    .OutMax=1000,
+    .OutMin=-1000,
+    .KdOut=0,
+    .cmd=0,
+    .InteralCoef=0.15f,
+};   // 定义PID结构体变量：偏航
+volatile float pianhang = 0.0f; // 偏航角变量
 // 定义小车运行状态的枚举类型
 typedef enum {
     CAR_STATE_TRACKING = 0,    // 循迹状态（默认/核心状态）
@@ -511,7 +525,7 @@ int main(void)
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
   ESP8266_Init("F521F520","f521f520","192.168.100.25","8080");     
   Steer_SetAngle(90);
-  // IMU_init();         
+  IMU_init();         
   // HAL_Delay(10);
   // Steer_Stop();
   // gray_test();
@@ -538,13 +552,14 @@ int main(void)
     // SR04_Proc(&front_distance);
     Gray_Proc(&sensor, Normal, &track_error);
     Digtal=Get_Digtal_For_User(&sensor); 
+    MPU_Proc(&pianhang);
     // StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
     PERIODIC_START(Task_Vofa_Print, 50)
-        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d,%.4f\r\n",
+        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d,%.4f,%.5f,%.5f,%.5f,%.5f\r\n",
             error.Actual, error.Target, error.Out,
             yaw.Actual, yaw.Target, yaw.Out,
             speed_L.Actual, speed_L.Target, speed_L.Out,
@@ -554,7 +569,8 @@ int main(void)
             speed_L.Kp, speed_L.Ki, speed_L.Kd,
             speed_R.Kp, speed_R.Ki, speed_R.Kd, 
             track_error,(int)yaw.ErrorInt,
-            (float)(((Digtal>>7)&1)*1000 + ((Digtal>>6)&1)*100 + ((Digtal>>5)&1)*10 + ((Digtal>>4)&1) + ((Digtal>>3)&1)*0.1f + ((Digtal>>2)&1)*0.01f + ((Digtal>>1)&1)*0.001f + (Digtal&1)*0.0001f)); 
+            (float)(((Digtal>>7)&1)*1000 + ((Digtal>>6)&1)*100 + ((Digtal>>5)&1)*10 + ((Digtal>>4)&1) + ((Digtal>>3)&1)*0.1f + ((Digtal>>2)&1)*0.01f + ((Digtal>>1)&1)*0.001f + (Digtal&1)*0.0001f),
+            pid_pianhang.Actual, pid_pianhang.Target, pid_pianhang.Out, pianhang); 
     PERIODIC_END
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
