@@ -162,8 +162,8 @@ typedef enum {
     CAR_STATE_LOST_LINE_GO = 1,// 丢线直行状态
     CAR_STATE_OBSTACLE_AVOID = 2// 避障状态
 } CarState;
-volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
-// volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
+// volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
+volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
 
 //超声波+速度传感
 volatile int16_t  track_error = 0;    // 灰度传感器计算出的偏航偏差
@@ -554,7 +554,7 @@ int main(void)
     Gray_Proc(&sensor, Normal, &track_error);
     Digtal=Get_Digtal_For_User(&sensor); 
     MPU_Proc(&pianhang);
-    StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
+    // StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
