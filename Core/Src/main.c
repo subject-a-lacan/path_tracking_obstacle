@@ -314,7 +314,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // 局部变量，存放算出来的“目标期望速度”
             int16_t target_L = 0; 
             int16_t target_R = 0;
-            int16_t base_speed = 100; // 基础直行期望速度，后续可调
+            int16_t base_speed = 20; // 基础直行期望速度，后续可调
              speed_L.Actual = Read_Encoder_Left(); // 编码器读回来的真实速度
              speed_R.Actual = Read_Encoder_Right(); 
             // ==========================================================
@@ -336,13 +336,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                    // 1. 同步环 PID 计算 (让左右轮速度差为 0)
-                    // error.Target = 0;
-                    // error.Actual = speed_L.Actual - speed_R.Actual; // 实际差速
-                    // PID_Update(&error);
-                    // // 2. 补偿分配给左右轮
-                    // target_L = base_speed + (int16_t)error.Out;
-                    // target_R = base_speed - (int16_t)error.Out;
+                    target_L = base_speed;
+                    target_R = base_speed;
                     break;
                     
 
