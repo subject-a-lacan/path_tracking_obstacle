@@ -70,7 +70,7 @@ PID_t yaw={
     .Actual = 0,
     .Out = 0,
     .Kp = 0.003f,
-    .Ki = 0.00004f,
+    .Ki = 0.00005f,
     .Kd = 0.005f,
     .Error_now = 0,
     .Error_last = 0,
@@ -210,6 +210,12 @@ void StateMachine_Update(void)
     static uint8_t find_line_cnt = 0;
     static uint8_t obstacle_cnt = 0;
     
+    // 计算当前传感器中白灯的数量
+    uint8_t white_num = 0;
+    for (int i = 0; i < 8; i++) {
+        if ((sensor.Digtal >> i) & 0x01) white_num++;
+    }
+    uint8_t black_num = 8 - white_num;
 
     switch (car_state) 
     {
@@ -231,9 +237,9 @@ void StateMachine_Update(void)
             // else {
                 obstacle_cnt = 0; 
                 
-                // 次优先级：判断是否丢线 (0xFF代表8个灯全白)
-                if (sensor.Digtal == 0xFF) { 
-                    if (++lost_line_cnt > 5) { // 连续5次全白，确认丢线
+                // 次优先级：判断是否丢线 (7个及以上白灯连续5次)
+                if (white_num >= 7) { 
+                    if (++lost_line_cnt >= 5) { // 连续5次满足条件
                         car_state = CAR_STATE_LOST_LINE_GO; 
                     }
                 } else {
@@ -260,9 +266,9 @@ void StateMachine_Update(void)
             // else {
             //     obstacle_cnt = 0;
                 
-                // 判断是否重新踩到了黑线
-                if (sensor.Digtal != 0xFF) { // 只要不是全白
-                    if (++find_line_cnt > 4) { // 连续确认4次，防抖
+                // 判断是否重新踩到了黑线 (2个及以上黑灯连续5次)
+                if (black_num >= 2) { 
+                    if (++find_line_cnt >= 5) { // 连续确认5次
                         car_state = CAR_STATE_TRACKING; // 成功找回黑线，切回循迹
                         
                         // 为接下来的循迹转向环清除数据
@@ -518,7 +524,7 @@ int main(void)
   SR04_Init();
   Encoder_Init();
   No_MCU_Ganv_Sensor_Init(&sensor,white,black); 
-  ESP8266_Init("F521F520","f521f520","192.168.100.25","8080");     
+  ESP8266_Init("F521F520","f521f520","192.168.100.23","8080");     
   Steer_SetAngle(90);
   IMU_init();         
   // HAL_Delay(10);
@@ -548,7 +554,7 @@ int main(void)
     Gray_Proc(&sensor, Normal, &track_error);
     Digtal=Get_Digtal_For_User(&sensor); 
     MPU_Proc(&pianhang);
-    // StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
+    StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
