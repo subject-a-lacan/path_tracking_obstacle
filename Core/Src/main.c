@@ -160,7 +160,9 @@ volatile float pianhang = 0.0f; // 偏航角变量
 typedef enum {
     CAR_STATE_TRACKING = 0,    // 循迹状态（默认/核心状态）
     CAR_STATE_LOST_LINE_GO = 1,// 丢线直行状态
-    CAR_STATE_OBSTACLE_AVOID = 2// 避障状态
+    CAR_STATE_OBSTACLE_AVOID = 2, // 避障状态
+    CAR_STATE_TURN_LEFT = 3,   // 左转状态
+    CAR_STATE_TURN_RIGHT = 4   // 右转状态
 } CarState;
 // volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
 volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
@@ -343,26 +345,39 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     break;
 
                 case 1: // CAR_STATE_LOST_LINE_GO (丢线直行)
-                pid_pianhang.Actual = pianhang;
-                PID_Update(&pid_pianhang);
-                target_L = base_speed + (int16_t)pid_pianhang.Out; 
-                target_R = base_speed - (int16_t)pid_pianhang.Out;
+                    pid_pianhang.Actual = pianhang;
+                    PID_Update(&pid_pianhang);
+                    target_L = base_speed + (int16_t)pid_pianhang.Out; 
+                    target_R = base_speed - (int16_t)pid_pianhang.Out;
                     break;
-                    
 
                 case 2: // CAR_STATE_OBSTACLE_AVOID (避障机动)
                     // 1. 拦截主函数发来的复位
-                    // if (flag_avoid_reset == 1) {
-                    //     Avoidance_Run(&target_L, &target_R, sensor.Digtal, 1);
-                    //     flag_avoid_reset = 0; // 执行完复位，重置标志位
-                    // }
-                    // // 2. 正常执行避障非阻塞状态机
-                    // else {
-                    //     // 注意：这里传出的 target_L 和 target_R 直接作为目标速度送给内环
-                    // if (Avoidance_Run(&target_L, &target_R, sensor.Digtal, 0) == 1) {
-                    //         flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
-                    //     }
-                    // }
+                    if (flag_avoid_reset == 1) {
+                        Avoidance_Run(&target_L, &target_R, 1, Digtal);
+                        flag_avoid_reset = 0; // 执行完复位，重置标志位
+                    }
+                    // 2. 正常执行避障非阻塞状态机
+                    else {
+                        if (Avoidance_Run(&target_L, &target_R, 0, Digtal) == 1) {
+                            flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
+                            car_state = CAR_STATE_TRACKING;
+                        }
+                    }
+                    break;
+
+                case 3: // CAR_STATE_TURN_LEFT (左转 30 度)
+                    if (ClosedLoop_Turn(pid_pianhang.Target, &target_L, &target_R) == 1) {
+                        car_state = CAR_STATE_LOST_LINE_GO; // 转完切直行
+                        pid_pianhang.Target = pianhang;     // 锁定当前航向
+                    }
+                    break;
+
+                case 4: // CAR_STATE_TURN_RIGHT (右转 30 度)
+                    if (ClosedLoop_Turn(pid_pianhang.Target, &target_L, &target_R) == 1) {
+                        car_state = CAR_STATE_LOST_LINE_GO; // 转完切直行
+                        pid_pianhang.Target = pianhang;
+                    }
                     break;
             }
 
@@ -415,9 +430,34 @@ void UART_PID_Tune(uint8_t cmd, float val)
         case 'u': pid_pianhang.Ki = val;   printf("pid_pianhang Ki = %.3f\r\n", pid_pianhang.Ki); break;
         case 'w': pid_pianhang.Kd = val;   printf("pid_pianhang Kd = %.3f\r\n", pid_pianhang.Kd); break;
 
-        
-
         // ================= 控制指令 (固定动作) =================
+        case 'L': // 左转 30 度
+            pid_pianhang.Target = pianhang + 30.0f;
+            pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
+            car_state = CAR_STATE_TURN_LEFT;
+            error.cmd = 1;
+            break;
+
+        case 'R': // 右转 30 度
+            pid_pianhang.Target = pianhang - 30.0f;
+            pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
+            car_state = CAR_STATE_TURN_RIGHT;
+            error.cmd = 1;
+            break;
+
+        case 'A': // 执行避障
+            flag_avoid_reset = 1;
+            car_state = CAR_STATE_OBSTACLE_AVOID;
+            error.cmd = 1;
+            break;
+
+        case 'G': // 直行一段距离 (锁定当前航向)
+            pid_pianhang.Target = pianhang;
+            pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
+            car_state = CAR_STATE_LOST_LINE_GO;
+            error.cmd = 1;
+            break;
+
         case 'y': 
                   speed_L.Target = 20; speed_R.Target = 20;
                   error.cmd = 1;
@@ -426,11 +466,9 @@ void UART_PID_Tune(uint8_t cmd, float val)
                   speed_L.ErrorInt = 0; speed_L.Error_last = 0;
                   speed_R.ErrorInt = 0; speed_R.Error_last = 0;
                   pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
-                  printf("START (Speed 20)\r\n");
                   break;
         case 'z': 
                   error.cmd = 0;
-                  printf("STOP\r\n");
                   break;
         default: break; // 其他不理会
     }
