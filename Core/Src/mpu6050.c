@@ -146,21 +146,21 @@ uint8_t MPU6050_Init(void) {
     uint16_t valid_cnt = 0;            // 有效采样次数
     
     for(uint16_t i = 0; i < 500; i++)
-    {   uint16_t temp_acc[3] = {0};
-        uint16_t temp_gyro[3] = {0};
-        MPU6050ReadGyro(temp_gyro);    // 读取单次陀螺仪数据
-        MPU6050ReadAcc(temp_acc);
-        // 过滤无效数据（读取失败则跳过）
-        if(temp_gyro[0] != 0 || temp_gyro[1] != 0 || temp_gyro[2] != 0||temp_acc[0] != 0 || temp_acc[1] != 0 || temp_acc[2] != 0)        {
+    {   int16_t temp_acc[3] = {0};
+        int16_t temp_gyro[3] = {0};
+        MPU6050ReadGyro((uint16_t*)temp_gyro);    // 读取单次陀螺仪数据
+        MPU6050ReadAcc((uint16_t*)temp_acc);
+        // 过滤无效数据
+        if(temp_gyro[0] != 0 || temp_gyro[1] != 0 || temp_gyro[2] != 0) {
             gyro_sum[0] += temp_gyro[0];
             gyro_sum[1] += temp_gyro[1];
             gyro_sum[2] += temp_gyro[2];
-              acc_sum[0] += temp_acc[0];
+            acc_sum[0] += temp_acc[0];
             acc_sum[1] += temp_acc[1];
-            acc_sum[2] += (temp_acc[2] - 16384); // Z轴理论值为16384（±2g量程）
+            acc_sum[2] += (temp_acc[2] - 16384); 
             valid_cnt++;
         }
-        HAL_Delay(10); // 10ms采样一次（对应100Hz采样率）
+        HAL_Delay(10); 
     }
     
     // 计算零漂平均值（有效次数为0则校准失败）

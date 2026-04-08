@@ -143,8 +143,8 @@ PID_t pid_pianhang={
     .Target=0,
     .Actual=0,
     .Out=0,
-    .Kp=1.0f,
-    .Ki=0.0f,
+    .Kp=2.0f,
+    .Ki=0.1f,
     .Kd=0.0f,
     .Error_now=0,
     .Error_last=0,
@@ -241,6 +241,7 @@ void StateMachine_Update(void)
                 if (white_num >= 7) { 
                     if (++lost_line_cnt >= 5) { // 连续5次满足条件
                         car_state = CAR_STATE_LOST_LINE_GO; 
+                        pid_pianhang.Target = pianhang; // 锁定当前航向为直行目标
                     }
                 } else {
                     lost_line_cnt = 0; 
@@ -424,6 +425,7 @@ void UART_PID_Tune(uint8_t cmd, float val)
                   yaw.ErrorInt = 0; yaw.Error_last = 0;
                   speed_L.ErrorInt = 0; speed_L.Error_last = 0;
                   speed_R.ErrorInt = 0; speed_R.Error_last = 0;
+                  pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
                   printf("START (Speed 20)\r\n");
                   break;
         case 'z': 
@@ -569,7 +571,7 @@ int main(void)
             yaw.Actual, yaw.Target, yaw.Out,
             speed_L.Actual, speed_L.Target, speed_L.Out,
             speed_R.Actual, speed_R.Target, speed_R.Out,
-            error.Kp, error.Ki, error.Kd,
+            pid_pianhang.Kp, pid_pianhang.Ki, pid_pianhang.Kd,
             yaw.Kp, yaw.Ki, yaw.Kd,
             speed_L.Kp, speed_L.Ki, speed_L.Kd,
             speed_R.Kp, speed_R.Ki, speed_R.Kd, 

@@ -175,8 +175,8 @@ void IMU_getValues(float * values) {
     values[5] = gx[2] - gyro_offset[2]; // 陀螺仪Z (dps，校准后)
 }
 
-#define Kp 5.0f   
-#define Ki 0.1f
+#define Kp 0.5f   
+#define Ki 0.01f
 
 void IMU_AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) {
   float norm;
