@@ -164,8 +164,8 @@ typedef enum {
     CAR_STATE_TURN_LEFT = 3,   // 左转状态
     CAR_STATE_TURN_RIGHT = 4   // 右转状态
 } CarState;
-// volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
-volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
+volatile CarState car_state = CAR_STATE_TRACKING; // 初始化为循迹状态
+// volatile CarState car_state=CAR_STATE_LOST_LINE_GO;//PID调参测试专用
 
 //超声波+速度传感
 volatile int16_t  track_error = 0;    // 灰度传感器计算出的偏航偏差
@@ -225,18 +225,18 @@ void StateMachine_Update(void)
         // 状态 1：正常循迹
         // ==========================================
         case CAR_STATE_TRACKING:
-            // 优先级最高：判断是否需要避障 (小于20cm)
-            // if (front_distance < 20) {
-            //     if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
-            //         car_state = CAR_STATE_OBSTACLE_AVOID; 
+            // 优先级最高：判断是否需要避障 (小于50cm)
+            if (front_distance < 30) {
+                if (++obstacle_cnt > 3) {  // 连续3次确认，防抖
+                    car_state = CAR_STATE_OBSTACLE_AVOID; 
                     
-            //         // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
-            //         flag_avoid_reset = 1; 
+                    // 通知中断层的避障函数复位内部静态变量，准备执行新的避障！
+                    flag_avoid_reset = 1; 
                     
-            //         obstacle_cnt = 0;      
-            //     }
-            // } 
-            // else {
+                    obstacle_cnt = 0;      
+                }
+            } 
+            else {
                 obstacle_cnt = 0; 
                 
                 // 次优先级：判断是否丢线 (7个及以上白灯连续5次)
@@ -248,7 +248,7 @@ void StateMachine_Update(void)
                 } else {
                     lost_line_cnt = 0; 
                 }
-            // }
+            }
             break;
 
         // ==========================================
@@ -256,18 +256,18 @@ void StateMachine_Update(void)
         // ==========================================
         case CAR_STATE_LOST_LINE_GO:
             // 防撞！
-            // if (front_distance < 20) {
-            //     if (++obstacle_cnt > 4) {
-            //         car_state = CAR_STATE_OBSTACLE_AVOID;
+            if (front_distance < 30) {
+                if (++obstacle_cnt > 4) {
+                    car_state = CAR_STATE_OBSTACLE_AVOID;
                     
-            //         // 同样需要通知中断层复位避障动作
-            //         flag_avoid_reset = 1; 
+                    // 同样需要通知中断层复位避障动作
+                    flag_avoid_reset = 1; 
                     
-            //         obstacle_cnt = 0;
-            //     }
-            // } 
-            // else {
-            //     obstacle_cnt = 0;
+                    obstacle_cnt = 0;
+                }
+            } 
+            else {
+                obstacle_cnt = 0;
                 
                 // 判断是否重新踩到了黑线 (2个及以上黑灯连续5次)
                 if (black_num >= 2) { 
@@ -283,7 +283,7 @@ void StateMachine_Update(void)
                 } else {
                     find_line_cnt = 0;
                 }
-            // }
+            }
             break;
 
         // ==========================================
@@ -292,19 +292,19 @@ void StateMachine_Update(void)
         case CAR_STATE_OBSTACLE_AVOID:
             // 此时底层定时器中断正在高频调用 Avoidance_Run 控制电机
             
-            // if (flag_avoid_done == 1) { 
+            if (flag_avoid_done == 1) { 
                 
             //     // 避障彻底完成，严格按照逻辑直接切回循迹状态！
-            //     car_state = CAR_STATE_TRACKING; 
+                car_state = CAR_STATE_TRACKING; 
                 
             //     // 避障刚结束车身大概率有偏角，必须清零转向 PID 重新平滑切入赛道
-            //     yaw.ErrorInt = 0;
-            //     yaw.Error_last = 0;
-            //     yaw.KdOut = 0;
+                yaw.ErrorInt = 0;
+                yaw.Error_last = 0;
+                yaw.KdOut = 0;
                 
             //     // 收起捷报，清空信箱，为下一次避障做准备
-            //     flag_avoid_done = 0; 
-            // }
+                flag_avoid_done = 0; 
+            }
             break;
     }
 }
@@ -361,7 +361,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     else {
                         if (Avoidance_Run(&target_L, &target_R, 0, Digtal) == 1) {
                             flag_avoid_done = 1; // 升起捷报，通知主循环切回循迹
-                            car_state = CAR_STATE_TRACKING;
                         }
                     }
                     break;
@@ -466,6 +465,7 @@ void UART_PID_Tune(uint8_t cmd, float val)
                   speed_L.ErrorInt = 0; speed_L.Error_last = 0;
                   speed_R.ErrorInt = 0; speed_R.Error_last = 0;
                   pid_pianhang.ErrorInt = 0; pid_pianhang.Error_last = 0;
+                  car_state = CAR_STATE_TRACKING; // 切回循迹状态
                   break;
         case 'z': 
                   error.cmd = 0;
@@ -594,28 +594,29 @@ int main(void)
     //更新传感器数据 (每个Proc函数都调用了PERIODIC宏，用于实现伪并行)
     // Left_Speed_Proc(&left_speed);    这两行代码是大错特错 读取速度必须在中断函数里 否则数据不是实时的！
     // Right_Speed_Proc(&right_speed); 
-    // SR04_Proc(&front_distance);
+    SR04_Proc(&front_distance);
     Gray_Proc(&sensor, Normal, &track_error);
     Digtal=Get_Digtal_For_User(&sensor); 
     MPU_Proc(&pianhang);
-    // StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
+    StateMachine_Update(); // 根据当前传感器数据和状态机逻辑更新小车状态
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
     //下面是利用vofa调试时需要的代码
-    PERIODIC_START(Task_Vofa_Print, 50)
-        printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d,%.4f,%.5f,%.5f,%.5f,%.5f\r\n",
-            error.Actual, error.Target, error.Out,
-            yaw.Actual, yaw.Target, yaw.Out,
-            speed_L.Actual, speed_L.Target, speed_L.Out,
-            speed_R.Actual, speed_R.Target, speed_R.Out,
-            pid_pianhang.Kp, pid_pianhang.Ki, pid_pianhang.Kd,
-            yaw.Kp, yaw.Ki, yaw.Kd,
-            speed_L.Kp, speed_L.Ki, speed_L.Kd,
-            speed_R.Kp, speed_R.Ki, speed_R.Kd, 
-            track_error,(int)yaw.ErrorInt,
-            (float)(((Digtal>>7)&1)*1000 + ((Digtal>>6)&1)*100 + ((Digtal>>5)&1)*10 + ((Digtal>>4)&1) + ((Digtal>>3)&1)*0.1f + ((Digtal>>2)&1)*0.01f + ((Digtal>>1)&1)*0.001f + (Digtal&1)*0.0001f),
-            pid_pianhang.Actual, pid_pianhang.Target, pid_pianhang.Out, pianhang); 
+    PERIODIC_START(Task_Vofa_Print, 500)
+    //     printf("%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%d,%d,%.4f,%.5f,%.5f,%.5f,%.5f\r\n",
+    //         error.Actual, error.Target, error.Out,
+    //         yaw.Actual, yaw.Target, yaw.Out,
+    //         speed_L.Actual, speed_L.Target, speed_L.Out,
+    //         speed_R.Actual, speed_R.Target, speed_R.Out,
+    //         pid_pianhang.Kp, pid_pianhang.Ki, pid_pianhang.Kd,
+    //         yaw.Kp, yaw.Ki, yaw.Kd,
+    //         speed_L.Kp, speed_L.Ki, speed_L.Kd,
+    //         speed_R.Kp, speed_R.Ki, speed_R.Kd, 
+    //         track_error,(int)yaw.ErrorInt,
+    //         (float)(((Digtal>>7)&1)*1000 + ((Digtal>>6)&1)*100 + ((Digtal>>5)&1)*10 + ((Digtal>>4)&1) + ((Digtal>>3)&1)*0.1f + ((Digtal>>2)&1)*0.01f + ((Digtal>>1)&1)*0.001f + (Digtal&1)*0.0001f),
+    //         pid_pianhang.Actual, pid_pianhang.Target, pid_pianhang.Out, pianhang); 
+    printf("%d\r\n", car_state);
     PERIODIC_END
     // 串口发送数据的 1 2 3是error的actual target out 4,5,6是yaw的actual target out 7,8,9是speed_L的actual target out
     // 10 11 12 是speed_R的actual target out 13 14 15是error的KP KI KD 16 17 18是yaw的KP KI KD 19 20 21是speed_L的KP KI KD 22 23 24是speed_R的KP KI KD
